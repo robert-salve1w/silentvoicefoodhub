@@ -1,7 +1,7 @@
 // ========== ADMIN DASHBOARD SCRIPT ==========
 
 // API URL
-const API_URL = "https://your-backend-url.onrender.com/api";
+const API_URL = "https://silent-voice-food-hub-api.onrender.com/api";
 
 // ========== SESSION CHECK ==========
 function checkAdminSession() {

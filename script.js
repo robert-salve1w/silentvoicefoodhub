@@ -414,7 +414,7 @@ let cart = JSON.parse(localStorage.getItem("silentBite_cart")) || [];
 let currentCategory = "all";
 
 // ========== BACKEND API URL ==========
-const API_URL = "https://your-backend-url.onrender.com/api";
+const API_URL = "https://silent-voice-food-hub-api.onrender.com/api";
 console.log("🔗 API URL:", API_URL);
 
 // ========== ORDER SLIP SYSTEM ==========
