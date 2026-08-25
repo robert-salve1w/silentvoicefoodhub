@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
+    />
+    <title>Staff Login · Silent Voice Food Hub</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* Login page specific styles */
+      .login-page {
+        min-height: 100vh;
+        background: linear-gradient(145deg, #8b0000 0%, #dc143c 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+
+      .login-card {
+        max-width: 420px;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 32px;
+        padding: 2.5rem 2rem 2.5rem;
+        box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 221, 176, 0.5);
+        text-align: center;
+      }
+
+      .login-logo {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #ff6b6b, #dc143c);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.2rem;
+        box-shadow: 0 12px 20px -8px rgba(220, 20, 60, 0.4);
+      }
+
+      .login-logo span {
+        font-size: 2.8rem;
+      }
+
+      .login-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #2c2b28;
+        margin-bottom: 0.3rem;
+      }
+
+      .login-subtitle {
+        font-size: 0.85rem;
+        color: #888;
+        margin-bottom: 1.8rem;
+      }
+
+      .login-error {
+        background: #fce4ec;
+        color: #721c24;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        margin-bottom: 1.2rem;
+        display: none;
+        text-align: left;
+      }
+
+      .login-error.show {
+        display: block;
+      }
+
+      .login-role-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+      }
+
+      .role-option {
+        padding: 1rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+        text-align: center;
+      }
+
+      .role-option:hover {
+        border-color: #dc143c;
+        background: #fff5f5;
+      }
+
+      .role-option.selected {
+        border-color: #dc143c;
+        background: #fff0f0;
+        box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.15);
+      }
+
+      .role-option .role-icon {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .role-option .role-name {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #2c2b28;
+      }
+
+      .role-option .role-desc {
+        font-size: 0.7rem;
+        color: #999;
+      }
+
+      .login-form {
+        text-align: left;
+      }
+
+      .form-group {
+        margin-bottom: 1.2rem;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #333;
+        margin-bottom: 6px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 16px;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: border-color 0.2s;
+        background: #fafafa;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #dc143c;
+        background: white;
+      }
+
+      .login-btn {
+        width: 100%;
+        padding: 1rem;
+        background: #dc143c;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: "Inter", sans-serif;
+        margin-top: 0.5rem;
+      }
+
+      .login-btn:hover {
+        background: #b22222;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(220, 20, 60, 0.3);
+      }
+
+      .login-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .login-footer {
+        margin-top: 1.5rem;
+        font-size: 0.75rem;
+        color: #999;
+      }
+
+      .login-footer a {
+        color: #dc143c;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .login-footer a:hover {
+        text-decoration: underline;
+      }
+
+      .password-toggle {
+        position: relative;
+      }
+
+      .password-toggle input {
+        padding-right: 48px;
+      }
+
+      .toggle-btn {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: #999;
+        padding: 4px;
+      }
+
+      @media (max-width: 480px) {
+        .login-card {
+          padding: 1.8rem 1.2rem;
+        }
+
+        .login-title {
+          font-size: 1.3rem;
+        }
+
+        .login-role-selector {
+          gap: 8px;
+        }
+
+        .role-option {
+          padding: 0.8rem;
+        }
+
+        .role-option .role-icon {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-page">
+      <div class="login-card">
+        <!-- Logo -->
+        <div class="login-logo">
+          <span>🍽️</span>
+        </div>
+
+        <h1 class="login-title">Silent Voice Food Hub</h1>
+        <p class="login-subtitle">Staff &amp; Admin Login Portal</p>
+
+        <!-- Error Message -->
+        <div id="loginError" class="login-error">
+          ⚠️
+          <span id="errorMessage">Invalid credentials. Please try again.</span>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="login-role-selector" id="roleSelector">
+          <div
+            class="role-option selected"
+            data-role="staff"
+            onclick="selectRole('staff')"
+          >
+            <span class="role-icon">👨‍🍳</span>
+            <div class="role-name">Service Crew</div>
+            <div class="role-desc">View &amp; manage orders</div>
+          </div>
+          <div
+            class="role-option"
+            data-role="admin"
+            onclick="selectRole('admin')"
+          >
+            <span class="role-icon">👑</span>
+            <div class="role-name">Admin</div>
+            <div class="role-desc">Full system control</div>
+          </div>
+        </div>
+
+        <!-- Login Form -->
+        <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="username">👤 Username</label>
+            <input
+              type="text"
+              id="username"
+              placeholder="Enter your username"
+              required
+              autofocus
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">🔒 Password</label>
+            <div class="password-toggle">
+              <input
+                type="password"
+                id="password"
+                placeholder="Enter your password"
+                required
+              />
+              <button
+                type="button"
+                class="toggle-btn"
+                onclick="togglePassword()"
+              >
+                👁️
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="login-btn" id="loginBtn">
+            🔐 Login
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <p>Return to <a href="index.html">Customer Portal</a></p>
+          <p style="margin-top: 4px; font-size: 0.65rem; color: #ccc">
+            Default: staff / staff123 &bull; admin / admin123
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="staff-login.js"></script>
+  </body>
+</html>

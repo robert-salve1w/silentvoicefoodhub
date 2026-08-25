@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
+    />
+    <title>Staff Dashboard · Silent Voice Food Hub</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Session Check -->
+    <script>
+      (function () {
+        const loggedIn = sessionStorage.getItem("staffLoggedIn");
+        const role = sessionStorage.getItem("staffRole");
+        if (loggedIn !== "true" || role !== "staff") {
+          window.location.href = "staff-login.html";
+        }
+      })();
+    </script>
+
+    <div class="staff-dashboard">
+      <!-- Sidebar -->
+      <aside class="staff-sidebar" id="staffSidebar">
+        <!-- Sidebar Header with Logo and Close Button -->
+        <div class="sidebar-header">
+          <div class="sidebar-logo">
+            <img
+              src="images/silentvoicefoodhubLogo.jpg"
+              alt="Silent Voice"
+              style="
+                height: 32px;
+                width: 32px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+              "
+            />
+            <span>Silent Voice</span>
+          </div>
+          <button class="sidebar-close-btn" onclick="closeSidebar()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <!-- Staff Role Indicator -->
+        <div class="sidebar-role" id="sidebarRole">
+          <span class="role-icon">👨‍🍳</span>
+          <span class="role-name" id="roleNameDisplay">Service Crew</span>
+        </div>
+
+        <nav class="sidebar-nav">
+          <button class="sidebar-btn active" data-page="dashboard">
+            <span class="material-symbols-outlined">dashboard</span>
+            Dashboard
+          </button>
+          <button class="sidebar-btn" data-page="orders">
+            <span class="material-symbols-outlined">receipt_long</span>
+            Order Management
+          </button>
+          <button class="sidebar-btn" data-page="menu">
+            <span class="material-symbols-outlined">restaurant_menu</span>
+            Menu Management
+          </button>
+        </nav>
+        <div class="sidebar-footer">
+          <button onclick="staffLogout()" class="sidebar-logout">
+            <span class="material-symbols-outlined">logout</span>
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      <!-- Overlay for mobile -->
+      <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+        onclick="closeSidebar()"
+      ></div>
+
+      <!-- Main Content -->
+      <main class="staff-main" id="staffMain">
+        <!-- Top Header -->
+        <header class="staff-topbar">
+          <div class="topbar-left">
+            <button class="hamburger-btn" id="hamburgerBtn">
+              <span class="material-symbols-outlined">menu</span>
+            </button>
+            <h1 id="pageTitle">📊 Dashboard</h1>
+          </div>
+          <div class="topbar-right">
+            <span
+              id="staffNameDisplay"
+              style="font-weight: 600; color: #333; font-size: 0.9rem"
+            ></span>
+            <button onclick="loadStaffOrders()" class="refresh-btn">
+              <span class="material-symbols-outlined">refresh</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- ========== DASHBOARD PAGE ========== -->
+        <div id="pageDashboard" class="staff-page-content active">
+          <!-- Stats Cards Row -->
+          <div class="staff-stats-row">
+            <div class="stat-card">
+              <div class="stat-label">⏳ Pending Orders</div>
+              <div class="stat-number" id="statPending">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">✅ Completed Orders</div>
+              <div class="stat-number" id="statCompleted">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">💰 Revenue</div>
+              <div class="stat-number" id="statRevenue">₱0</div>
+            </div>
+          </div>
+
+          <!-- 🔥 DATE FILTER -->
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 1rem;
+              flex-wrap: wrap;
+              background: white;
+              padding: 0.8rem 1.2rem;
+              border-radius: 12px;
+              border: 1px solid #f0e2d2;
+            "
+          >
+            <span style="font-weight: 600; font-size: 0.9rem; color: #555"
+              >📅 Date Filter:</span
+            >
+
+            <select
+              id="dashboardDateFilter"
+              onchange="applyDashboardFilter()"
+              style="
+                padding: 8px 16px;
+                border-radius: 30px;
+                border: 2px solid #dc143c;
+                background: white;
+                font-weight: 600;
+                font-size: 0.85rem;
+                font-family: &quot;Inter&quot;, sans-serif;
+                cursor: pointer;
+                color: #333;
+                min-width: 140px;
+                outline: none;
+              "
+            >
+              <option value="today">📅 Today</option>
+              <option value="yesterday">📅 Yesterday</option>
+              <option value="thisweek">📅 This Week</option>
+              <option value="thismonth">📅 This Month</option>
+              <option value="thisyear">📅 This Year</option>
+              <option value="custom">📅 Custom Date</option>
+            </select>
+
+            <!-- Custom Date Range (hidden by default) -->
+            <div
+              id="customDateRange"
+              style="
+                display: none;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+              "
+            >
+              <label style="font-size: 0.8rem; color: #666">From:</label>
+              <input
+                type="date"
+                id="customDateFrom"
+                style="
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  border: 1.5px solid #e0e0e0;
+                  font-family: &quot;Inter&quot;, sans-serif;
+                  font-size: 0.8rem;
+                "
+              />
+              <label style="font-size: 0.8rem; color: #666">To:</label>
+              <input
+                type="date"
+                id="customDateTo"
+                style="
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  border: 1.5px solid #e0e0e0;
+                  font-family: &quot;Inter&quot;, sans-serif;
+                  font-size: 0.8rem;
+                "
+              />
+              <button
+                onclick="applyDashboardFilter()"
+                style="
+                  padding: 6px 16px;
+                  border-radius: 20px;
+                  border: none;
+                  background: #dc143c;
+                  color: white;
+                  font-weight: 600;
+                  font-size: 0.8rem;
+                  cursor: pointer;
+                  font-family: &quot;Inter&quot;, sans-serif;
+                "
+              >
+                Apply
+              </button>
+            </div>
+
+            <span
+              id="filterDateDisplay"
+              style="font-size: 0.8rem; color: #888; margin-left: auto"
+            >
+              Showing: <strong id="filterDateLabel">Today</strong>
+            </span>
+          </div>
+
+          <!-- Recent Activity Table -->
+          <div class="staff-recent-activity">
+            <div class="recent-header">
+              <h2>📋 Recent Activity</h2>
+              <!-- 🔥 DATE RANGE DISPLAY -->
+              <span
+                id="dashboardDateRangeDisplay"
+                style="font-size: 0.85rem; color: #888; font-weight: 500"
+              >
+                📅 <span id="dashboardDateRangeText">Today</span>
+              </span>
+            </div>
+            <div class="table-wrapper">
+              <table class="staff-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer #</th>
+                    <th>Items</th>
+                    <th>Status</th>
+                    <th>Total Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="staffTableBody">
+                  <!-- Orders will be injected here -->
+                </tbody>
+              </table>
+            </div>
+            <div
+              id="staffEmptyState"
+              class="staff-empty-state"
+              style="display: none"
+            >
+              <span>📋</span>
+              <p>No orders found</p>
+              <p class="empty-subtitle">
+                Orders will appear here when customers place them
+              </p>
+            </div>
+            <div id="staffLoading" class="staff-loading" style="display: none">
+              <div class="spinner"></div>
+              <p>Loading orders...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== ORDER MANAGEMENT PAGE ========== -->
+        <div id="pageOrders" class="staff-page-content">
+          <h2>📦 Order Management</h2>
+          <p style="color: #888; margin-bottom: 1rem">
+            View and manage all customer orders here.
+          </p>
+
+          <!-- FILTER TABS -->
+          <div
+            style="
+              display: flex;
+              gap: 8px;
+              margin-bottom: 1rem;
+              flex-wrap: wrap;
+            "
+          >
+            <button
+              class="filter-tab active"
+              data-filter="all"
+              onclick="filterOrders('all')"
+              style="
+                padding: 8px 20px;
+                border-radius: 30px;
+                border: 2px solid #dc143c;
+                background: #dc143c;
+                color: white;
+                font-weight: 600;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-family: &quot;Inter&quot;, sans-serif;
+                transition: all 0.2s;
+              "
+            >
+              📋 All (<span id="countAll">0</span>)
+            </button>
+            <button
+              class="filter-tab"
+              data-filter="pending"
+              onclick="filterOrders('pending')"
+              style="
+                padding: 8px 20px;
+                border-radius: 30px;
+                border: 2px solid #ffc107;
+                background: transparent;
+                color: #856404;
+                font-weight: 600;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-family: &quot;Inter&quot;, sans-serif;
+                transition: all 0.2s;
+              "
+            >
+              ⏳ Pending (<span id="countPending">0</span>)
+            </button>
+            <button
+              class="filter-tab"
+              data-filter="completed"
+              onclick="filterOrders('completed')"
+              style="
+                padding: 8px 20px;
+                border-radius: 30px;
+                border: 2px solid #28a745;
+                background: transparent;
+                color: #155724;
+                font-weight: 600;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-family: &quot;Inter&quot;, sans-serif;
+                transition: all 0.2s;
+              "
+            >
+              ✅ Completed (<span id="countCompleted">0</span>)
+            </button>
+            <button
+              class="filter-tab"
+              data-filter="declined"
+              onclick="filterOrders('declined')"
+              style="
+                padding: 8px 20px;
+                border-radius: 30px;
+                border: 2px solid #dc3545;
+                background: transparent;
+                color: #dc3545;
+                font-weight: 600;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-family: &quot;Inter&quot;, sans-serif;
+                transition: all 0.2s;
+              "
+            >
+              ❌ Declined (<span id="countDeclined">0</span>)
+            </button>
+          </div>
+
+          <!-- Order Cards Container -->
+          <div id="staffOrdersContainer">
+            <!-- Order cards will be injected here -->
+          </div>
+
+          <div
+            id="staffOrdersEmpty"
+            class="staff-empty-state"
+            style="display: none"
+          >
+            <span>📋</span>
+            <p>No orders found</p>
+            <p class="empty-subtitle">
+              Orders will appear here when customers place them
+            </p>
+          </div>
+
+          <div
+            id="staffOrdersLoading"
+            class="staff-loading"
+            style="display: none"
+          >
+            <div class="spinner"></div>
+            <p>Loading orders...</p>
+          </div>
+        </div>
+
+        <!-- ========== MENU MANAGEMENT PAGE ========== -->
+        <div id="pageMenu" class="staff-page-content">
+          <h2>🍽️ Menu Management</h2>
+          <p style="color: #888; margin-bottom: 1rem">
+            View and manage all menu items here.
+          </p>
+
+          <div class="staff-recent-activity" style="margin-top: 1rem">
+            <div class="recent-header">
+              <h2>📋 Dishes</h2>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="staff-table">
+                <thead>
+                  <tr>
+                    <th>Menu Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Availability</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="staffMenuBody">
+                  <!-- Menu items will be injected here -->
+                </tbody>
+              </table>
+            </div>
+            <div
+              id="staffMenuEmpty"
+              class="staff-empty-state"
+              style="display: none"
+            >
+              <span>🍽️</span>
+              <p>No menu items found</p>
+              <p class="empty-subtitle">
+                Menu items will appear here when added
+              </p>
+            </div>
+            <div
+              id="staffMenuLoading"
+              class="staff-loading"
+              style="display: none"
+            >
+              <div class="spinner"></div>
+              <p>Loading menu...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="staff-script.js"></script>
+  </body>
+</html>

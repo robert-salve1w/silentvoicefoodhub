@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
+    />
+    <title>Admin Dashboard · Silent Voice Food Hub</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Session Check -->
+    <script>
+      (function () {
+        const loggedIn = sessionStorage.getItem("staffLoggedIn");
+        const role = sessionStorage.getItem("staffRole");
+        if (loggedIn !== "true" || role !== "admin") {
+          window.location.href = "staff-login.html";
+        }
+      })();
+    </script>
+
+    <div class="staff-dashboard">
+      <!-- Sidebar -->
+      <aside class="staff-sidebar" id="staffSidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">
+            <img
+              src="images/silentvoicefoodhubLogo.jpg"
+              alt="Silent Voice"
+              style="
+                height: 32px;
+                width: 32px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+              "
+            />
+            <span>Silent Voice</span>
+          </div>
+          <button class="sidebar-close-btn" onclick="closeSidebar()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="sidebar-role" id="sidebarRole">
+          <span class="role-icon">👑</span>
+          <span class="role-name" id="roleNameDisplay">Administrator</span>
+        </div>
+
+        <nav class="sidebar-nav">
+          <button class="sidebar-btn active" data-page="dashboard">
+            <span class="material-symbols-outlined">dashboard</span>
+            Dashboard
+          </button>
+          <button class="sidebar-btn" data-page="orders">
+            <span class="material-symbols-outlined">receipt_long</span>
+            Order Management
+          </button>
+          <button class="sidebar-btn" data-page="menu">
+            <span class="material-symbols-outlined">restaurant_menu</span>
+            Menu Management
+          </button>
+          <button class="sidebar-btn" data-page="analytics">
+            <span class="material-symbols-outlined">analytics</span>
+            Analytics
+          </button>
+        </nav>
+        <div class="sidebar-footer">
+          <button onclick="adminLogout()" class="sidebar-logout">
+            <span class="material-symbols-outlined">logout</span>
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      <!-- Overlay for mobile -->
+      <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+        onclick="closeSidebar()"
+      ></div>
+
+      <!-- Main Content -->
+      <main class="staff-main" id="staffMain">
+        <!-- Top Header -->
+        <header class="staff-topbar">
+          <div class="topbar-left">
+            <button class="hamburger-btn" id="hamburgerBtn">
+              <span class="material-symbols-outlined">menu</span>
+            </button>
+            <h1 id="pageTitle">📊 Dashboard</h1>
+          </div>
+          <div class="topbar-right">
+            <span
+              id="adminNameDisplay"
+              style="font-weight: 600; color: #333; font-size: 0.9rem"
+            ></span>
+            <button onclick="loadAdminDashboard()" class="refresh-btn">
+              <span class="material-symbols-outlined">refresh</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Dashboard Page -->
+        <div id="pageDashboard" class="staff-page-content active">
+          <!-- Stats Cards Row -->
+          <div class="admin-stats-row">
+            <div class="stat-card">
+              <div class="stat-label">📋 Total Orders Today</div>
+              <div class="stat-number" id="adminTodayOrders">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">💰 Revenue</div>
+              <div class="stat-number" id="adminRevenue">₱0</div>
+            </div>
+          </div>
+
+          <!-- Chart Placeholder -->
+          <div class="admin-chart-container">
+            <div class="chart-header">
+              <h2>📈 Sales Overview</h2>
+              <div class="chart-filters">
+                <button
+                  class="chart-filter active"
+                  data-period="daily"
+                  onclick="setChartPeriod('daily')"
+                >
+                  Daily
+                </button>
+                <button
+                  class="chart-filter"
+                  data-period="weekly"
+                  onclick="setChartPeriod('weekly')"
+                >
+                  Weekly
+                </button>
+                <button
+                  class="chart-filter"
+                  data-period="monthly"
+                  onclick="setChartPeriod('monthly')"
+                >
+                  Monthly
+                </button>
+              </div>
+            </div>
+            <div id="chartContainer" class="chart-container">
+              <div style="text-align: center; padding: 2rem; color: #888">
+                <span style="font-size: 3rem">📊</span>
+                <p>Chart will be displayed here</p>
+                <p style="font-size: 0.85rem">
+                  Sales data visualization coming soon
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity Table -->
+          <div class="staff-recent-activity">
+            <div class="recent-header">
+              <h2>📋 Recent Activity</h2>
+            </div>
+            <div class="table-wrapper">
+              <table class="staff-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer #</th>
+                    <th>Items</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody id="adminTableBody">
+                  <!-- Orders will be injected here -->
+                </tbody>
+              </table>
+            </div>
+            <div
+              id="adminEmptyState"
+              class="staff-empty-state"
+              style="display: none"
+            >
+              <span>📋</span>
+              <p>No orders found</p>
+              <p class="empty-subtitle">
+                Orders will appear here when customers place them
+              </p>
+            </div>
+            <div id="adminLoading" class="staff-loading" style="display: none">
+              <div class="spinner"></div>
+              <p>Loading orders...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Management Page -->
+        <div id="pageOrders" class="staff-page-content">
+          <h2>📦 Order Management</h2>
+          <p style="color: #888; margin-bottom: 1rem">
+            View and monitor all customer orders here.
+          </p>
+
+          <div class="staff-recent-activity" style="margin-top: 1rem">
+            <div class="recent-header">
+              <h2>📋 All Orders</h2>
+            </div>
+            <div class="table-wrapper">
+              <table class="staff-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer #</th>
+                    <th>Item List</th>
+                    <th>Time</th>
+                    <th>Payment Type</th>
+                    <th>Dietary Preference</th>
+                  </tr>
+                </thead>
+                <tbody id="adminOrdersBody">
+                  <!-- Orders will be injected here -->
+                </tbody>
+              </table>
+            </div>
+            <div
+              id="adminOrdersEmpty"
+              class="staff-empty-state"
+              style="display: none"
+            >
+              <span>📋</span>
+              <p>No orders found</p>
+              <p class="empty-subtitle">
+                Orders will appear here when customers place them
+              </p>
+            </div>
+            <div
+              id="adminOrdersLoading"
+              class="staff-loading"
+              style="display: none"
+            >
+              <div class="spinner"></div>
+              <p>Loading orders...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Menu Management Page -->
+        <div id="pageMenu" class="staff-page-content">
+          <h2>🍽️ Menu Management</h2>
+          <p style="color: #888; margin-bottom: 1rem">
+            View and manage all menu items here.
+          </p>
+
+          <div class="staff-recent-activity" style="margin-top: 1rem">
+            <div class="recent-header">
+              <h2>📋 Dishes</h2>
+            </div>
+            <div class="table-wrapper">
+              <table class="staff-table">
+                <thead>
+                  <tr>
+                    <th>Menu Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Availability</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="adminMenuBody">
+                  <!-- Menu items will be injected here -->
+                </tbody>
+              </table>
+            </div>
+            <div
+              id="adminMenuEmpty"
+              class="staff-empty-state"
+              style="display: none"
+            >
+              <span>🍽️</span>
+              <p>No menu items found</p>
+              <p class="empty-subtitle">
+                Menu items will appear here when added
+              </p>
+            </div>
+            <div
+              id="adminMenuLoading"
+              class="staff-loading"
+              style="display: none"
+            >
+              <div class="spinner"></div>
+              <p>Loading menu...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics Page -->
+        <div id="pageAnalytics" class="staff-page-content">
+          <h2>📊 Analytics</h2>
+          <p style="color: #888; margin-bottom: 1rem">
+            View sales and customer analytics.
+          </p>
+
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <h3>Total Customers</h3>
+              <div class="analytics-number" id="analyticsTotalCustomers">0</div>
+            </div>
+            <div class="analytics-card">
+              <h3>Total Orders</h3>
+              <div class="analytics-number" id="analyticsTotalOrders">0</div>
+            </div>
+            <div class="analytics-card">
+              <h3>Total Revenue</h3>
+              <div class="analytics-number" id="analyticsTotalRevenue">₱0</div>
+            </div>
+            <div class="analytics-card">
+              <h3>Avg Order Value</h3>
+              <div class="analytics-number" id="analyticsAvgOrder">₱0</div>
+            </div>
+          </div>
+
+          <!-- Top Selling Items -->
+          <div class="staff-recent-activity">
+            <div class="recent-header">
+              <h2>🏆 Top Selling Items</h2>
+            </div>
+            <div id="analyticsTopItems" style="padding: 0.5rem 0">
+              <p style="color: #888; text-align: center; padding: 1rem">
+                Loading top items...
+              </p>
+            </div>
+          </div>
+
+          <!-- Dietary Trends -->
+          <div class="staff-recent-activity" style="margin-top: 1rem">
+            <div class="recent-header">
+              <h2>📊 Dietary Preference Trends</h2>
+            </div>
+            <div id="analyticsDietaryTrends" style="padding: 0.5rem 0">
+              <p style="color: #888; text-align: center; padding: 1rem">
+                Loading dietary trends...
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="admin-script.js"></script>
+  </body>
+</html>

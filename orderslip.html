@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
+    />
+    <title>Silent Bite · Order Slip</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="orderslip-page">
+      <!-- Header with back arrow -->
+      <div class="orderslip-header-bar">
+        <a href="menu.html" class="back-arrow">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <div class="orderslip-title">Order Slip</div>
+        <div style="width: 40px"></div>
+      </div>
+
+      <!-- Order Slips Container -->
+      <div id="orderslipContainer" class="orderslip-container">
+        <!-- Order slips will be injected here -->
+      </div>
+
+      <!-- Empty State Message -->
+      <div
+        id="emptyOrderslipMessage"
+        class="empty-orderslip-message"
+        style="display: none"
+      >
+        <span>📋</span>
+        <p>No order slips yet</p>
+        <p class="empty-subtitle">
+          Complete a payment to see your order history
+        </p>
+        <a href="menu.html" class="btn-start-order">Start Ordering</a>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

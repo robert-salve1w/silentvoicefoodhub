@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
+    />
+    <title>Silent Bite · Your Cart</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="cart-page">
+      <!-- Header -->
+      <div class="cart-header-bar">
+        <a href="menu.html" class="back-arrow">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <div class="cart-title">My Cart</div>
+        <div style="width: 40px"></div>
+      </div>
+
+      <!-- Cart Items Container -->
+      <div id="cartItemsContainer" class="cart-items-container">
+        <!-- Items will be dynamically injected here -->
+      </div>
+
+      <!-- Empty Cart Message -->
+      <div
+        id="emptyCartMessage"
+        class="empty-cart-message"
+        style="display: none"
+      >
+        <span>🛒</span>
+        <p>Your cart is empty</p>
+        <a href="menu.html" class="btn-start-order">Start Ordering</a>
+      </div>
+
+      <!-- Bottom Checkout Bar -->
+      <div id="checkoutBar" class="checkout-bar" style="display: none">
+        <div class="total-amount-box">
+          <span class="total-label">Total Amount</span>
+          <span class="total-price" id="totalAmount">₱0</span>
+        </div>
+        <button id="checkoutBtn" class="checkout-btn">
+          CHECK OUT (<span id="checkoutCount">0</span>)
+        </button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

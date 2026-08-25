@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
+    />
+    <title>Silent Bite · Payment</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="payment-page">
+      <!-- Header with back arrow -->
+      <div class="payment-header-bar">
+        <a href="cart.html" class="back-arrow">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <div class="payment-title">Payment</div>
+        <div style="width: 40px"></div>
+      </div>
+
+      <!-- Payment Form Container -->
+      <div class="payment-container">
+        <!-- Billing Recipient - Customer Number (Auto-generated, not editable) -->
+        <div class="payment-section">
+          <label class="payment-label"
+            >🆔 Customer Number (Billing Recipient)</label
+          >
+          <div
+            class="customer-number-box"
+            id="customerNumberDisplay"
+            style="
+              background: #f0ede8;
+              padding: 1rem;
+              border-radius: 16px;
+              font-weight: 700;
+              font-size: 1.1rem;
+              color: #e67e22;
+              text-align: center;
+              letter-spacing: 1px;
+            "
+          >
+            Loading...
+          </div>
+          <p class="input-hint">
+            Your unique customer number - automatically generated when you add
+            items to cart
+          </p>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="payment-section">
+          <label class="payment-label">💳 Payment Method</label>
+          <div class="payment-options">
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="cash" checked />
+              <span class="option-content">
+                <span class="option-icon">💵</span>
+                <span class="option-name">Cash</span>
+              </span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="gcash" />
+              <span class="option-content">
+                <span class="option-icon">📱</span>
+                <span class="option-name">GCash</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="payment-section summary-section">
+          <label class="payment-label">📋 Order Summary</label>
+          <div id="orderSummaryList" class="order-summary-list">
+            <!-- Cart items will be injected here -->
+          </div>
+          <div class="summary-total">
+            <span>Total Amount</span>
+            <span id="summaryTotalAmount">₱0</span>
+          </div>
+        </div>
+
+        <!-- Confirm Order Button -->
+        <button id="confirmOrderBtn" class="confirm-order-btn">
+          ✅ Confirm Order
+        </button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
