@@ -712,11 +712,10 @@ function closeReviewModal() {
   }
   window.pendingReview = null;
 }
-
 // ========== CONFIRM SUBMIT REVIEW - FIXED ==========
 async function confirmSubmitReview() {
-  const pending = window.pendingReview;
-  if (!pending) {
+  const pendingReview = window.pendingReview;
+  if (!pendingReview) {
     if (typeof showToast === "function") {
       showToast("No review pending");
     }
@@ -732,20 +731,20 @@ async function confirmSubmitReview() {
   if (selectedOption) {
     if (selectedOption.value === "customer") {
       // Use Customer #
-      userName = pending.customerNumber || "Anonymous";
+      userName = pendingReview.customerNumber || "Anonymous";
     } else {
       // Use custom name
       const nameInput = document.getElementById("reviewerNameInput");
       userName = nameInput ? nameInput.value.trim() : "";
       if (!userName) {
-        userName = pending.customerNumber || "Anonymous";
+        userName = pendingReview.customerNumber || "Anonymous";
       }
     }
   } else {
-    userName = pending.customerNumber || "Anonymous";
+    userName = pendingReview.customerNumber || "Anonymous";
   }
 
-  console.log("📝 Submitting review:", { ...pending, userName });
+  console.log("📝 Submitting review:", { ...pendingReview, userName });
 
   const confirmBtn = document.querySelector(
     '#reviewSubmitModal button[onclick="confirmSubmitReview()"]',
@@ -753,6 +752,35 @@ async function confirmSubmitReview() {
   if (confirmBtn) {
     confirmBtn.textContent = "⏳ Submitting...";
     confirmBtn.disabled = true;
+  }
+
+  // 🔥 Mark this dish as rated for pending order
+  const pendingRatings =
+    typeof getPendingRatings === "function" ? getPendingRatings() : [];
+  const matchingPendings = pendingRatings.filter(
+    (p) => p.itemId === pendingReview.itemId,
+  );
+
+  if (matchingPendings.length > 0) {
+    matchingPendings.forEach((matchingPending) => {
+      if (typeof markDishAsRated === "function") {
+        markDishAsRated(matchingPending.itemId, matchingPending.orderNumber);
+      }
+    });
+
+    // Remove all matching from pending
+    const updated = pendingRatings.filter(
+      (p) => p.itemId !== pendingReview.itemId,
+    );
+
+    if (typeof savePendingRatings === "function") {
+      savePendingRatings(updated);
+    }
+
+    // 🔥 Update the rate badge if on rate page
+    if (typeof updateRateBadge === "function") {
+      updateRateBadge();
+    }
   }
 
   try {
@@ -765,11 +793,11 @@ async function confirmSubmitReview() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        menuItemId: pending.itemId,
+        menuItemId: pendingReview.itemId,
         customerNumber: customerNumber || "Anonymous",
         userName: userName || customerNumber || "Anonymous",
-        rating: pending.rating,
-        comment: pending.comment || "",
+        rating: pendingReview.rating,
+        comment: pendingReview.comment || "",
       }),
     });
 
@@ -781,29 +809,33 @@ async function confirmSubmitReview() {
       let ratingsData =
         JSON.parse(localStorage.getItem("silentBite_ratings")) || {};
 
-      if (!ratingsData[pending.itemId]) {
-        ratingsData[pending.itemId] = { average: 0, count: 0, reviews: [] };
+      if (!ratingsData[pendingReview.itemId]) {
+        ratingsData[pendingReview.itemId] = {
+          average: 0,
+          count: 0,
+          reviews: [],
+        };
       }
 
       const newReview = {
         user: userName || "Anonymous",
-        rating: pending.rating,
-        comment: pending.comment || "",
+        rating: pendingReview.rating,
+        comment: pendingReview.comment || "",
         date: new Date().toISOString().split("T")[0],
         createdAt: new Date().toISOString(),
         _id: result.id,
       };
 
-      ratingsData[pending.itemId].reviews.unshift(newReview);
-      ratingsData[pending.itemId].count =
-        ratingsData[pending.itemId].reviews.length;
+      ratingsData[pendingReview.itemId].reviews.unshift(newReview);
+      ratingsData[pendingReview.itemId].count =
+        ratingsData[pendingReview.itemId].reviews.length;
 
-      const total = ratingsData[pending.itemId].reviews.reduce(
+      const total = ratingsData[pendingReview.itemId].reviews.reduce(
         (sum, r) => sum + r.rating,
         0,
       );
-      ratingsData[pending.itemId].average =
-        Math.round((total / ratingsData[pending.itemId].count) * 10) / 10;
+      ratingsData[pendingReview.itemId].average =
+        Math.round((total / ratingsData[pendingReview.itemId].count) * 10) / 10;
 
       localStorage.setItem("silentBite_ratings", JSON.stringify(ratingsData));
 
@@ -823,11 +855,11 @@ async function confirmSubmitReview() {
       if (commentInput) commentInput.value = "";
 
       // 🔥 Reload the page with updated data
-      loadRatingsPage(pending.itemId);
+      loadRatingsPage(pendingReview.itemId);
 
       // 🔥 Also update the menu item rating in the background
       if (typeof updateMenuItemRatingDisplay === "function") {
-        updateMenuItemRatingDisplay(pending.itemId);
+        updateMenuItemRatingDisplay(pendingReview.itemId);
       }
     } else {
       if (typeof showToast === "function") {
@@ -846,7 +878,6 @@ async function confirmSubmitReview() {
     confirmBtn.disabled = false;
   }
 }
-
 // ========== ADD REVIEW FUNCTION ==========
 async function addReview(itemId, rating, comment, userName) {
   try {

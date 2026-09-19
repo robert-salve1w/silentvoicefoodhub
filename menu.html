@@ -19,17 +19,248 @@
   </head>
   <body>
     <div class="menu-page">
-      <!-- Header with back arrow + logo -->
+      <!-- Header with logo + search -->
       <div class="menu-header">
-        <a href="index.html" class="back-arrow">
-          <span class="material-symbols-outlined">arrow_back</span>
+        <a href="index.html" class="header-logo-link">
+          <div class="header-logo">
+            <img
+              src="images/silentvoicefoodhubLogo.jpg"
+              alt="Silent Voice Food Hub"
+              class="header-logo-img"
+            />
+            <div class="header-logo-text">
+              <span>Silent Voice Food Hub</span>
+              <small>| silent bites</small>
+            </div>
+          </div>
         </a>
-        <div class="header-logo">
-          <img src="images/silentvoicefoodhubLogo.jpg" alt="Silent Voice Food Hub" style="height: 32px; width: auto; vertical-align: middle; border-radius: 50%;">
-    <span style="vertical-align: middle; margin-left: 8px;">Silent Voice Food Hub</span>
-    <small style="vertical-align: middle; font-size: 0.6rem; color: #888;">| silent bites</small>
+
+        <!-- Spacer pushes search icon to the far right -->
+        <div class="header-spacer"></div>
+
+        <!-- 🔍 SEARCH ICON (upper right) -->
+        <button
+          class="menu-search-btn"
+          onclick="openSearchOverlay()"
+          aria-label="Search menu"
+        >
+          <span class="material-symbols-outlined">search</span>
+        </button>
+      </div>
+
+      <!-- 🔍 YOUTUBE-STYLE FULL SCREEN SEARCH OVERLAY -->
+      <div class="search-overlay" id="searchOverlay">
+        <!-- Search Header -->
+        <div class="search-overlay-header">
+          <!-- Back arrow (left) -->
+          <button
+            class="search-overlay-back-btn"
+            onclick="closeSearchOverlay()"
+            aria-label="Back"
+          >
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
+
+          <!-- Search bar (middle) -->
+          <div class="search-overlay-input-wrapper">
+            <input
+              type="text"
+              id="menuSearchInput"
+              class="search-overlay-input"
+              placeholder="Search dishes..."
+              autocomplete="off"
+              onkeydown="handleSearchKeydown(event)"
+              oninput="handleSearchInputChange(event)"
+            />
+            <button
+              class="search-overlay-clear-btn"
+              id="searchClearBtn"
+              onclick="clearSearchInput()"
+              style="display: none"
+            >
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <!-- Empty spacer (right) -->
+          <div class="search-overlay-spacer"></div>
         </div>
-        <div style="width: 30px"></div>
+
+        <!-- Search Content -->
+        <div class="search-overlay-content" id="searchOverlayContent">
+          <!-- Default state: suggestions -->
+          <div class="search-suggestions" id="searchSuggestions">
+            <div class="search-suggestions-title">Popular searches</div>
+            <div class="search-chip-list">
+              <button class="search-chip" onclick="quickSearch('chicken')">
+                chicken
+              </button>
+              <button class="search-chip" onclick="quickSearch('vegan')">
+                vegan
+              </button>
+              <button class="search-chip" onclick="quickSearch('rice')">
+                rice
+              </button>
+              <button class="search-chip" onclick="quickSearch('drinks')">
+                drinks
+              </button>
+              <button class="search-chip" onclick="quickSearch('sandwich')">
+                sandwich
+              </button>
+              <button class="search-chip" onclick="quickSearch('salad')">
+                salad
+              </button>
+            </div>
+          </div>
+
+          <!-- Results will be injected here -->
+          <div
+            class="search-results-list"
+            id="searchResultsList"
+            style="display: none"
+          ></div>
+
+          <!-- No results -->
+          <div
+            class="search-no-results"
+            id="searchNoResults"
+            style="display: none"
+          >
+            <span class="material-symbols-outlined">search_off</span>
+            <p>No dishes found</p>
+            <small id="searchNoResultsQuery"></small>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔥 DIETARY PREFERENCES ACCORDION -->
+      <div class="diet-accordion">
+        <button
+          class="diet-accordion-header"
+          id="dietAccordionHeader"
+          onclick="toggleDietAccordion()"
+        >
+          <div class="diet-accordion-title">
+            <span class="diet-icon">🍽️</span>
+            <span>Dietary Preferences</span>
+            <span
+              class="diet-active-count"
+              id="dietActiveCount"
+              style="display: none"
+              >0</span
+            >
+          </div>
+          <span class="diet-accordion-arrow" id="dietAccordionArrow">▼</span>
+        </button>
+
+        <div class="diet-accordion-content" id="dietAccordionContent">
+          <!-- Active dietary tags display -->
+          <div class="diet-active-display" id="dietActiveDisplay">
+            <span class="diet-active-label">Active filters:</span>
+            <div class="diet-active-tags" id="dietActiveTags">
+              <span class="diet-no-active"
+                >No restrictions — all items available</span
+              >
+            </div>
+          </div>
+
+          <!-- Dietary filter options -->
+          <div class="diet-filter-list">
+            <label class="diet-filter-item" data-diet="vegetarian">
+              <input
+                type="checkbox"
+                id="menuDietVeg"
+                onchange="toggleMenuDietary('vegetarian')"
+              />
+              <span class="diet-filter-emoji">🌱</span>
+              <div class="diet-filter-text">
+                <span class="diet-filter-name">Vegetarian</span>
+                <span class="diet-filter-desc">No meat or fish</span>
+              </div>
+              <span class="diet-filter-check">✓</span>
+            </label>
+
+            <label class="diet-filter-item" data-diet="vegan">
+              <input
+                type="checkbox"
+                id="menuDietVegan"
+                onchange="toggleMenuDietary('vegan')"
+              />
+              <span class="diet-filter-emoji">🌿</span>
+              <div class="diet-filter-text">
+                <span class="diet-filter-name">Vegan</span>
+                <span class="diet-filter-desc">No animal products</span>
+              </div>
+              <span class="diet-filter-check">✓</span>
+            </label>
+
+            <label class="diet-filter-item" data-diet="glutenFree">
+              <input
+                type="checkbox"
+                id="menuDietGF"
+                onchange="toggleMenuDietary('glutenFree')"
+              />
+              <span class="diet-filter-emoji">🚫</span>
+              <div class="diet-filter-text">
+                <span class="diet-filter-name">Gluten-Free</span>
+                <span class="diet-filter-desc">No wheat or gluten</span>
+              </div>
+              <span class="diet-filter-check">✓</span>
+            </label>
+
+            <label class="diet-filter-item" data-diet="pescatarian">
+              <input
+                type="checkbox"
+                id="menuDietPesc"
+                onchange="toggleMenuDietary('pescatarian')"
+              />
+              <span class="diet-filter-emoji">🐟</span>
+              <div class="diet-filter-text">
+                <span class="diet-filter-name">Pescatarian</span>
+                <span class="diet-filter-desc">Fish but no meat</span>
+              </div>
+              <span class="diet-filter-check">✓</span>
+            </label>
+
+            <label class="diet-filter-item" data-diet="lowCarb">
+              <input
+                type="checkbox"
+                id="menuDietLC"
+                onchange="toggleMenuDietary('lowCarb')"
+              />
+              <span class="diet-filter-emoji">🥗</span>
+              <div class="diet-filter-text">
+                <span class="diet-filter-name">Low-Carb</span>
+                <span class="diet-filter-desc">Reduced carbs</span>
+              </div>
+              <span class="diet-filter-check">✓</span>
+            </label>
+
+            <label class="diet-filter-item" data-diet="highProtein">
+              <input
+                type="checkbox"
+                id="menuDietHP"
+                onchange="toggleMenuDietary('highProtein')"
+              />
+              <span class="diet-filter-emoji">💪</span>
+              <div class="diet-filter-text">
+                <span class="diet-filter-name">High-Protein</span>
+                <span class="diet-filter-desc">Protein-rich meals</span>
+              </div>
+              <span class="diet-filter-check">✓</span>
+            </label>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="diet-accordion-actions">
+            <button class="diet-clear-btn" onclick="clearMenuDietary()">
+              Clear All
+            </button>
+            <button class="diet-apply-btn" onclick="applyMenuDietary()">
+              Apply Filters
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Recommended section -->
@@ -39,7 +270,7 @@
         <div class="rec-items" id="recItemsList"></div>
       </div>
 
-      <!-- Menu categories - ADDED Sandwiches and Salads tabs -->
+      <!-- Menu categories -->
       <div class="categories" id="categoryTabs">
         <button data-cat="all" class="cat-btn active">All</button>
         <button data-cat="Rice Meals" class="cat-btn">Rice Meals</button>
@@ -53,46 +284,108 @@
       <!-- Menu grid -->
       <div id="menuGrid" class="menu-grid"></div>
 
-      <<!-- Bottom Navigation Bar -->
-<div class="bottom-bar">
-  <button class="nav-icon" data-nav="menu">
-    <span>🍽️</span>
-    <span>Menu</span>
-  </button>
-  <button class="nav-icon" data-nav="cart" style="position: relative">
-    <span>🛒</span>
-    <span>Cart</span>
-    <span id="navCartBadge" class="cart-badge" style="position: absolute; top: -8px; right: -10px; display: none">0</span>
-  </button>
-  <button class="nav-icon" data-nav="payment">
-    <span>💳</span>
-    <span>Payment</span>
-  </button>
-  <button class="nav-icon" data-nav="orderslip" style="position: relative">
-    <span>🧾</span>
-    <span>OrderSlip</span>
-    <!-- 🔥 NEW: Notification badge for order slip -->
-    <span id="orderSlipBadge" class="nav-badge" style="
-      position: absolute;
-      top: -8px;
-      right: -10px;
-      background: #dc143c;
-      color: white;
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 50%;
-      min-width: 20px;
-      height: 20px;
-      text-align: center;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid white;
-      z-index: 10;
-    ">0</span>
-  </button>
-</div>
+      <!-- Bottom Navigation Bar -->
+      <div class="bottom-bar">
+        <button class="nav-icon" data-nav="menu">
+          <span>🍽️</span>
+          <span>Menu</span>
+        </button>
+        <button class="nav-icon" data-nav="cart" style="position: relative">
+          <span>🛒</span>
+          <span>Cart</span>
+          <span
+            id="navCartBadge"
+            class="cart-badge"
+            style="position: absolute; top: -8px; right: -10px; display: none"
+            >0</span
+          >
+        </button>
+        <button class="nav-icon" data-nav="rate" style="position: relative">
+          <span>⭐</span>
+          <span>Rate</span>
+          <span
+            id="rateBadge"
+            class="nav-badge"
+            style="
+              position: absolute;
+              top: -8px;
+              right: -10px;
+              background: #f5a623;
+              color: white;
+              font-size: 0.65rem;
+              font-weight: 700;
+              padding: 2px 6px;
+              border-radius: 50%;
+              min-width: 20px;
+              height: 20px;
+              text-align: center;
+              display: none;
+              align-items: center;
+              justify-content: center;
+              border: 2px solid white;
+              z-index: 10;
+            "
+            >0</span
+          >
+        </button>
+        <button
+          class="nav-icon"
+          data-nav="orderslip"
+          style="position: relative"
+        >
+          <span>🧾</span>
+          <span>OrderSlip</span>
+          <span
+            id="orderSlipBadge"
+            class="nav-badge"
+            style="
+              position: absolute;
+              top: -8px;
+              right: -10px;
+              background: #dc143c;
+              color: white;
+              font-size: 0.65rem;
+              font-weight: 700;
+              padding: 2px 6px;
+              border-radius: 50%;
+              min-width: 20px;
+              height: 20px;
+              text-align: center;
+              display: none;
+              align-items: center;
+              justify-content: center;
+              border: 2px solid white;
+              z-index: 10;
+            "
+            >0</span
+          >
+          <span
+            id="orderSlipActiveBadge"
+            class="nav-badge-active"
+            style="
+              position: absolute;
+              top: -8px;
+              left: -10px;
+              background: #007bff;
+              color: white;
+              font-size: 0.65rem;
+              font-weight: 700;
+              padding: 2px 6px;
+              border-radius: 50%;
+              min-width: 20px;
+              height: 20px;
+              text-align: center;
+              display: none;
+              align-items: center;
+              justify-content: center;
+              border: 2px solid white;
+              z-index: 10;
+            "
+            >0</span
+          >
+        </button>
+      </div>
+    </div>
 
     <script src="script.js"></script>
   </body>

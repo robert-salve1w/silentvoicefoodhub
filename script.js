@@ -1,10 +1,25 @@
+// ========== ORDER SLIP FILTER STATE (PERSISTENT) ==========
+let orderslipDateFilter =
+  localStorage.getItem("silentBite_orderslipFilter") || "all";
+let orderslipCustomDateFrom =
+  localStorage.getItem("silentBite_orderslipCustomFrom") || null;
+let orderslipCustomDateTo =
+  localStorage.getItem("silentBite_orderslipCustomTo") || null;
+
 // ========== NOTIFICATION SYSTEM ==========
 let unreadOrderUpdates =
   JSON.parse(localStorage.getItem("silentBite_unreadOrders")) || [];
 let lastCheckedStatus =
   JSON.parse(localStorage.getItem("silentBite_lastOrderStatus")) || {};
 
-// ========== FILIPINO FOOD MENU DATA ==========
+// 🔥 DIETARY ACCORDION STATE (declare early to avoid TDZ error)
+let dietAccordionOpen = false;
+
+// 🔥 SEARCH STATE (declare early to avoid TDZ error)
+let isSearchOverlayOpen = false;
+let currentSearchQuery = "";
+
+// ========== FILIPINO FOOD MENU DATA (WITH ALLERGENS) ==========
 const menuData = [
   // ========== RICE MEALS ==========
   {
@@ -14,6 +29,7 @@ const menuData = [
     price: 75,
     img: "adobo.jpg",
     dietary: ["High-Protein"],
+    allergens: ["Soy"], // 🔥 ADD THIS
     ingredients: [
       "Chicken",
       "Soy Sauce",
@@ -32,6 +48,7 @@ const menuData = [
     price: 85,
     img: "sinigangbangus.jpg",
     dietary: ["Pescatarian", "Heart-Healthy"],
+    allergens: ["Fish"], // 🔥 ADD THIS
     ingredients: [
       "Milkfish",
       "Tamarind",
@@ -50,6 +67,7 @@ const menuData = [
     price: 65,
     img: "tofu-sisig.jpg",
     dietary: ["Vegan", "High-Protein"],
+    allergens: ["Soy"], // 🔥 ADD THIS
     ingredients: ["Tofu", "Onions", "Chili", "Vegan Mayo", "Garlic Rice"],
     description:
       "Crispy tofu chunks sizzled with onions, chili, and vegan mayo. Served over garlic rice. A plant-based twist on the Filipino sisig classic.",
@@ -63,6 +81,7 @@ const menuData = [
     price: 65,
     img: "feta-tomato.jpg",
     dietary: ["Vegetarian"],
+    allergens: ["Dairy", "Gluten"], // 🔥 ADD THIS
     ingredients: ["Feta Cheese", "Tomato", "Basil"],
     description:
       "A Mediterranean-inspired sandwich with creamy feta cheese, fresh tomatoes, and aromatic basil.",
@@ -74,6 +93,7 @@ const menuData = [
     price: 60,
     img: "hummus-veggie.jpg",
     dietary: ["Vegan"],
+    allergens: ["Sesame", "Gluten"], // 🔥 ADD THIS
     ingredients: ["Hummus", "Grilled Veggies", "Rucola"],
     description:
       "Creamy hummus paired with smoky grilled vegetables and peppery rucola.",
@@ -85,6 +105,7 @@ const menuData = [
     price: 55,
     img: "cottage-cucumber.jpg",
     dietary: ["Vegetarian", "High-Protein"],
+    allergens: ["Dairy", "Gluten"], // 🔥 ADD THIS
     ingredients: ["Cottage Cheese", "Cucumber", "Fresh Dill"],
     description:
       "Light and refreshing cottage cheese with crisp cucumber and fresh dill.",
@@ -96,6 +117,7 @@ const menuData = [
     price: 70,
     img: "avocado-egg.jpg",
     dietary: ["Vegetarian", "High-Protein"],
+    allergens: ["Egg", "Gluten"], // 🔥 ADD THIS
     ingredients: ["Avocado", "Poached Egg", "Chili Flakes"],
     description:
       "Creamy avocado with a perfectly poached egg, finished with a sprinkle of chili flakes.",
@@ -107,6 +129,7 @@ const menuData = [
     price: 50,
     img: "yogurt-berry.jpg",
     dietary: ["Vegetarian"],
+    allergens: ["Dairy", "Gluten"], // 🔥 ADD THIS
     ingredients: ["Greek Yogurt", "Berries", "Chia Seeds"],
     description:
       "A sweet and healthy sandwich featuring Greek yogurt, fresh berries, and chia seeds.",
@@ -118,6 +141,7 @@ const menuData = [
     price: 68,
     img: "mozzarella-pesto.jpg",
     dietary: ["Vegetarian"],
+    allergens: ["Dairy", "Nuts", "Gluten"], // 🔥 ADD THIS
     ingredients: ["Mozzarella", "Pesto", "Cherry Tomatoes"],
     description:
       "Creamy mozzarella with aromatic pesto and sweet cherry tomatoes.",
@@ -129,6 +153,7 @@ const menuData = [
     price: 72,
     img: "turkey-spinach.jpg",
     dietary: ["High-Protein"],
+    allergens: ["Gluten"], // 🔥 ADD THIS
     ingredients: ["Turkey Slices", "Spinach", "Mustard"],
     description: "Lean turkey slices with fresh spinach and tangy mustard.",
   },
@@ -139,6 +164,7 @@ const menuData = [
     price: 68,
     img: "egg-avocado.jpg",
     dietary: ["Vegetarian", "High-Protein"],
+    allergens: ["Egg", "Gluten"], // 🔥 ADD THIS
     ingredients: ["Egg Salad", "Avocado", "Lettuce"],
     description:
       "Creamy egg salad and fresh avocado slices with crisp lettuce.",
@@ -152,6 +178,7 @@ const menuData = [
     price: 85,
     img: "italian-sub-salad.jpg",
     dietary: ["High-Protein"],
+    allergens: ["Dairy", "Gluten"], // 🔥 ADD THIS
     ingredients: ["Lettuce", "Ham", "Salami", "Provolone", "Pickles"],
     description:
       "All the flavors of a classic Italian sub in a fresh salad bowl with ham, salami, provolone, and pickles.",
@@ -163,6 +190,7 @@ const menuData = [
     price: 88,
     img: "spicy-pepperoni.jpg",
     dietary: ["High-Protein"],
+    allergens: ["Dairy", "Gluten"], // 🔥 ADD THIS
     ingredients: [
       "Lettuce",
       "Pepperoni",
@@ -180,6 +208,7 @@ const menuData = [
     price: 82,
     img: "turkey-provolone.jpg",
     dietary: ["High-Protein"],
+    allergens: ["Dairy"], // 🔥 ADD THIS
     ingredients: [
       "Lettuce",
       "Turkey",
@@ -197,6 +226,7 @@ const menuData = [
     price: 80,
     img: "mediterranean-italian.jpg",
     dietary: ["Vegetarian"],
+    allergens: ["Dairy"], // 🔥 ADD THIS
     ingredients: ["Lettuce", "Salami", "Cucumber", "Olives", "Feta"],
     description:
       "A Mediterranean-inspired salad with salami, crisp cucumber, briny olives, and tangy feta cheese.",
@@ -210,6 +240,7 @@ const menuData = [
     price: 55,
     img: "chicken-wrap.jpg",
     dietary: ["High-Protein", "Low-Carb"],
+    allergens: ["Dairy", "Gluten"], // 🔥 ADD THIS
     ingredients: [
       "Grilled Chicken",
       "Lettuce",
@@ -228,6 +259,7 @@ const menuData = [
     price: 40,
     img: "lumpia.jpg",
     dietary: ["Vegan"],
+    allergens: ["Nuts", "Peanuts"], // 🔥 ADD THIS
     ingredients: ["Vegetables", "Tofu", "Sweet Potato", "Peanut-Garlic Sauce"],
     description:
       "Fresh spring roll packed with julienned vegetables, tofu, and sweet potato. Served with a sweet and savory peanut-garlic sauce.",
@@ -239,6 +271,7 @@ const menuData = [
     price: 25,
     img: "banana-cue.jpg",
     dietary: ["Vegan"],
+    allergens: [], // 🔥 ADD THIS (no allergens)
     ingredients: ["Saba Bananas", "Brown Sugar"],
     description:
       "Deep-fried caramelized saba bananas coated in brown sugar. Crispy on the outside, soft and sweet on the inside.",
@@ -252,6 +285,7 @@ const menuData = [
     price: 20,
     img: "calamansi.jpg",
     dietary: ["Vegan", "Low-Carb"],
+    allergens: [], // 🔥 ADD THIS
     ingredients: ["Fresh Calamansi", "Honey/Sugar", "Water", "Ice"],
     description:
       "Freshly squeezed calamansi (Philippine lime) juice sweetened with honey or sugar. Refreshingly tangy and rich in Vitamin C.",
@@ -263,6 +297,7 @@ const menuData = [
     price: 25,
     img: "soymilk.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: ["Soy"], // 🔥 ADD THIS
     ingredients: ["Soybeans", "Water", "Sweetener"],
     description:
       "Creamy, plant-based soy milk lightly sweetened. Perfect dairy-free alternative packed with protein.",
@@ -274,6 +309,7 @@ const menuData = [
     price: 45,
     img: "beetroot-detox.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Liver Detox, Glowing Skin",
   },
   {
@@ -283,6 +319,7 @@ const menuData = [
     price: 40,
     img: "turmeric-ginger.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Anti-Inflammatory, Clear Skin",
   },
   {
@@ -292,6 +329,7 @@ const menuData = [
     price: 50,
     img: "amla-immunity.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Immune Boost, Youthful Skin",
   },
   {
@@ -301,6 +339,7 @@ const menuData = [
     price: 35,
     img: "fennel-digest.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Better Digestion, Clear Skin",
   },
   {
@@ -310,6 +349,7 @@ const menuData = [
     price: 55,
     img: "ashwagandha-restore.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Stress Relief, Glowing Skin",
   },
   {
@@ -319,6 +359,7 @@ const menuData = [
     price: 48,
     img: "green-detox.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Liver Cleanse, Acne Control",
   },
   {
@@ -328,6 +369,7 @@ const menuData = [
     price: 42,
     img: "chia-seed-energy.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Energy Boost, Hydrated Skin",
   },
   {
@@ -337,6 +379,7 @@ const menuData = [
     price: 30,
     img: "mint-lemon-cooler.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Digestion Support, Fresh Skin",
   },
   {
@@ -346,6 +389,7 @@ const menuData = [
     price: 52,
     img: "pomegranate-radiance.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Heart Health, Radiant Skin",
   },
   {
@@ -355,6 +399,7 @@ const menuData = [
     price: 38,
     img: "cinnamon-metabolism.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Blood Sugar Balance, Glowing Skin",
   },
   {
@@ -364,6 +409,7 @@ const menuData = [
     price: 44,
     img: "aloe-vera-hydration.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Gut Health, Soothing Skin",
   },
   {
@@ -373,6 +419,7 @@ const menuData = [
     price: 40,
     img: "carrot-orange-vitality.jpg",
     dietary: ["Vegan", "Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     description: "Eye Health, Bright Skin",
   },
 
@@ -384,6 +431,7 @@ const menuData = [
     price: 35,
     img: "fruit-salad.jpg",
     dietary: ["Gluten-Free"],
+    allergens: [], // 🔥 ADD THIS
     ingredients: ["Mango", "Pineapple", "Papaya", "Banana"],
     description:
       "Mixed fresh tropical fruits including mango, pineapple, papaya, and banana. Light, healthy, and naturally sweet.",
@@ -395,6 +443,7 @@ const menuData = [
     price: 30,
     img: "biko.jpg",
     dietary: ["Vegan"],
+    allergens: ["Coconut"], // 🔥 ADD THIS
     ingredients: ["Sticky Rice", "Coconut Milk", "Brown Sugar"],
     description:
       "Sweet sticky rice cake cooked with coconut milk and topped with latik (coconut curds). Rich, chewy, and deeply satisfying.",
@@ -706,23 +755,52 @@ function showMealModal(itemId) {
       </div>
     `;
   }
+  // WITH ALLERGEN DISPLAY
+  let allergensHtml = "";
+  if (item.allergens && item.allergens.length > 0) {
+    allergensHtml = `
+    <div style="margin-bottom: 16px;">
+      <div style="font-weight: 700; font-size: 0.85rem; color: #dc3545; margin-bottom: 8px;">⚠️ ALLERGENS</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+        ${item.allergens
+          .map(
+            (allergen) => `
+          <span style="display: inline-block; background: #fff0f0; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: #dc3545; border: 1px solid #f5c6cb; margin: 0 4px 8px 0;">
+            ${allergen}
+          </span>
+        `,
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
+  } else {
+    allergensHtml = `
+    <div style="margin-bottom: 16px;">
+      <div style="font-weight: 700; font-size: 0.85rem; color: #28a745; margin-bottom: 8px;">✅ ALLERGENS</div>
+      <div style="font-size: 0.8rem; color: #28a745; font-weight: 500;">
+        No known allergens
+      </div>
+    </div>
+  `;
+  }
 
   let ingredientsHtml = "";
   if (item.ingredients && item.ingredients.length > 0) {
     ingredientsHtml = `
-      <div style="margin-bottom: 16px;">
-        <div style="font-weight: 700; font-size: 0.85rem; color: #DC143C; margin-bottom: 8px;">📋 INGREDIENTS</div>
-        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-          ${item.ingredients
-            .map(
-              (ing) => `
-            <span style="display: inline-block; background: #f0ede8; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; color: #555; margin: 0 4px 8px 0;">${ing}</span>
-          `,
-            )
-            .join("")}
-        </div>
+    <div style="margin-bottom: 16px;">
+      <div style="font-weight: 700; font-size: 0.85rem; color: #DC143C; margin-bottom: 8px;">📋 INGREDIENTS</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+        ${item.ingredients
+          .map(
+            (ing) => `
+          <span style="display: inline-block; background: #f0ede8; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; color: #555; margin: 0 4px 8px 0;">${ing}</span>
+        `,
+          )
+          .join("")}
       </div>
-    `;
+    </div>
+  `;
   }
 
   modalContent.innerHTML = `
@@ -757,6 +835,7 @@ function showMealModal(itemId) {
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
         ${item.dietary.map((tag) => `<span style="background: #f0ede8; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600;">${tag}</span>`).join("")}
       </div>
+      ${allergensHtml}
       ${ingredientsHtml}
       <p style="color: #555; line-height: 1.5; margin-bottom: 16px; font-size: 0.9rem;">${item.description}</p>
       <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -809,9 +888,8 @@ function closeMealModal() {
     modal.remove();
   }
 }
-
 // ============================================================
-// ========== RENDER FUNCTIONS ==========
+// ========== RENDER RECOMMENDATIONS (WITH TICKER + LOOP) ==========
 // ============================================================
 
 function renderRecommendations() {
@@ -829,7 +907,7 @@ function renderRecommendations() {
 
   if (activePrefs.length === 0) {
     recTagsContainer.innerHTML =
-      '<span class="rec-tag">🍽️ No restrictions — all items available</span>';
+      '<span class="rec-tag">🍽️ No restrictions all items available</span>';
   } else {
     recTagsContainer.innerHTML = activePrefs
       .map((tag) => `<span class="rec-tag">✨ ${tag}</span>`)
@@ -843,46 +921,80 @@ function renderRecommendations() {
     return;
   }
 
-  recItemsList.innerHTML = recItems
-    .map((item) => {
-      // Get rating display
-      const rating = getItemRating(item.id);
-      let ratingHtml = "";
-      if (rating && rating.count > 0) {
-        const stars = renderStars(rating.average);
-        ratingHtml = `
-          <div style="font-size: 0.65rem; color: #f5a623; letter-spacing: 0.5px; margin-top: 2px;">
-            ${stars} <span style="color: #999; font-size: 0.6rem;">(${rating.count})</span>
-          </div>
-        `;
-      }
-
-      return `
-        <div class="rec-food-card" data-id="${item.id}" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px; background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-width: 130px; max-width: 160px; flex-shrink: 0; border: 1px solid #f0e2d2;">
-          <img src="${getImagePath(item.img)}" alt="${item.name}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 50%; margin-bottom: 6px; border: 2px solid #f0ede8;" onerror="this.src='https://placehold.co/70x70?text=🍽️'">
-          <div style="font-weight: 700; font-size: 0.8rem; color: #2c2b28; line-height: 1.2; max-width: 100%;">${item.name}</div>
-          <div style="font-weight: 700; color: #DC143C; font-size: 0.85rem; margin-top: 2px;">₱${item.price}</div>
-          ${ratingHtml}
-          <button class="addQuickBtn" data-id="${item.id}" style="
-            margin-top: 6px;
-            background: #DC143C;
-            color: white;
-            border: none;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-          " onmouseover="this.style.background='#b22222'" onmouseout="this.style.background='#DC143C'">
-            + Add
-          </button>
+  // 🔥 Build the item HTML
+  const buildItemHtml = (item, cloneIndex = "") => {
+    const rating = getItemRating(item.id);
+    let ratingHtml = "";
+    if (rating && rating.count > 0) {
+      const stars = renderStars(rating.average);
+      ratingHtml = `
+        <div style="font-size: 0.65rem; color: #f5a623; letter-spacing: 0.5px; margin-top: 2px;">
+          ${stars} <span style="color: #999; font-size: 0.6rem;">(${rating.count})</span>
         </div>
       `;
-    })
-    .join("");
+    }
 
+    return `
+      <div class="rec-food-card" data-id="${item.id}" data-clone="${cloneIndex}" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px; background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-width: 130px; max-width: 160px; flex-shrink: 0; border: 1px solid #f0e2d2;">
+        <img src="${getImagePath(item.img)}" alt="${item.name}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 50%; margin-bottom: 6px; border: 2px solid #f0ede8;" onerror="this.src='https://placehold.co/70x70?text=🍽️'">
+        <div style="font-weight: 700; font-size: 0.8rem; color: #2c2b28; line-height: 1.2; max-width: 100%;">${item.name}</div>
+        <div style="font-weight: 700; color: #DC143C; font-size: 0.85rem; margin-top: 2px;">₱${item.price}</div>
+        ${ratingHtml}
+        <button class="addQuickBtn" data-id="${item.id}" style="
+          margin-top: 6px;
+          background: #DC143C;
+          color: white;
+          border: none;
+          padding: 4px 14px;
+          border-radius: 20px;
+          font-size: 0.7rem;
+          font-weight: 600;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.2s;
+        " onmouseover="this.style.background='#b22222'" onmouseout="this.style.background='#DC143C'">
+          + Add
+        </button>
+      </div>
+    `;
+  };
+
+  // 🔥 Check if mobile view
+  const isMobile = window.innerWidth <= 768;
+
+  if (isMobile && recItems.length > 1) {
+    // 🔥 MOBILE: Duplicate items 3x for seamless infinite scroll
+    // We need enough clones so user can scroll forever
+    const itemsHtml = recItems
+      .map((item, i) => buildItemHtml(item, `a-${i}`))
+      .join("");
+    const itemsHtml2 = recItems
+      .map((item, i) => buildItemHtml(item, `b-${i}`))
+      .join("");
+    const itemsHtml3 = recItems
+      .map((item, i) => buildItemHtml(item, `c-${i}`))
+      .join("");
+
+    recItemsList.innerHTML = `
+      <div class="rec-items-ticker auto-scrolling" id="recTicker">
+        ${itemsHtml}${itemsHtml2}${itemsHtml3}
+      </div>
+    `;
+
+    // 🔥 Set up the infinite loop + auto-scroll
+    setTimeout(() => {
+      initRecommendationsTicker();
+    }, 100);
+  } else {
+    // 🔥 DESKTOP: Normal horizontal scroll
+    recItemsList.innerHTML = `
+      <div class="rec-items-ticker">
+        ${recItems.map((item, i) => buildItemHtml(item, `d-${i}`)).join("")}
+      </div>
+    `;
+  }
+
+  // Attach event listeners
   document.querySelectorAll(".addQuickBtn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -902,6 +1014,125 @@ function renderRecommendations() {
     }
   });
 }
+
+// ============================================================
+// ========== INFINITE LOOP TICKER ==========
+// ============================================================
+
+let tickerScrollInterval = null;
+let isUserInteracting = false;
+
+function initRecommendationsTicker() {
+  const container = document.getElementById("recItemsList");
+  const ticker = document.getElementById("recTicker");
+
+  if (!container || !ticker) return;
+
+  // Clear any existing interval
+  if (tickerScrollInterval) {
+    clearInterval(tickerScrollInterval);
+    tickerScrollInterval = null;
+  }
+
+  // 🔥 Initialize scroll position in the middle (so user can scroll both ways)
+  const thirdWidth = ticker.scrollWidth / 3;
+  container.scrollLeft = thirdWidth;
+
+  let autoScrollSpeed = 0.5; // pixels per frame
+  let rafId = null;
+  let lastTimestamp = 0;
+
+  // 🔥 Auto-scroll animation using requestAnimationFrame
+  function autoScroll(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const delta = timestamp - lastTimestamp;
+    lastTimestamp = timestamp;
+
+    if (!isUserInteracting && container) {
+      container.scrollLeft += autoScrollSpeed * (delta / 16);
+    }
+
+    // 🔥 Seamless loop - when scroll reaches boundaries, jump to equivalent position
+    const totalWidth = ticker.scrollWidth;
+    const thirdWidth = totalWidth / 3;
+
+    if (container.scrollLeft >= thirdWidth * 2) {
+      // Scrolled past the second copy - jump back by one full set
+      container.scrollLeft -= thirdWidth;
+    } else if (container.scrollLeft <= 0) {
+      // Scrolled past the beginning - jump forward by one full set
+      container.scrollLeft += thirdWidth;
+    }
+
+    rafId = requestAnimationFrame(autoScroll);
+  }
+
+  // Start auto-scroll
+  rafId = requestAnimationFrame(autoScroll);
+
+  // 🔥 Pause on user interaction
+  const pauseScroll = () => {
+    isUserInteracting = true;
+  };
+
+  const resumeScroll = () => {
+    // Wait a moment before resuming
+    setTimeout(() => {
+      isUserInteracting = false;
+      lastTimestamp = 0;
+    }, 1500);
+  };
+
+  // Touch events (mobile)
+  container.addEventListener("touchstart", pauseScroll, { passive: true });
+  container.addEventListener("touchend", resumeScroll, { passive: true });
+  container.addEventListener("touchcancel", resumeScroll, { passive: true });
+
+  // Mouse events (for testing on desktop)
+  container.addEventListener("mouseenter", pauseScroll);
+  container.addEventListener("mouseleave", resumeScroll);
+  container.addEventListener("mousedown", pauseScroll);
+  container.addEventListener("mouseup", resumeScroll);
+
+  // Wheel scroll (desktop trackpad/mouse)
+  container.addEventListener("wheel", pauseScroll, { passive: true });
+
+  // 🔥 Handle seamless loop on manual scroll (touch/wheel)
+  let scrollTimeout;
+  container.addEventListener(
+    "scroll",
+    () => {
+      // Clear any pending timeout
+      clearTimeout(scrollTimeout);
+
+      // Check for seamless loop
+      scrollTimeout = setTimeout(() => {
+        const totalWidth = ticker.scrollWidth;
+        const thirdWidth = totalWidth / 3;
+
+        if (container.scrollLeft >= thirdWidth * 2) {
+          container.scrollLeft -= thirdWidth;
+        } else if (container.scrollLeft <= 0) {
+          container.scrollLeft += thirdWidth;
+        }
+      }, 100);
+    },
+    { passive: true },
+  );
+
+  // Store the rafId for cleanup
+  tickerScrollInterval = rafId;
+
+  console.log("✅ Recommendations ticker initialized");
+}
+
+// ========== CLEANUP ON PAGE CHANGE ==========
+window.addEventListener("beforeunload", function () {
+  if (tickerScrollInterval) {
+    cancelAnimationFrame(tickerScrollInterval);
+    tickerScrollInterval = null;
+  }
+});
 
 function renderMenu() {
   const menuGrid = document.getElementById("menuGrid");
@@ -1284,13 +1515,13 @@ function createOrderSlipLocal(
   return orderSlip;
 }
 
-// ============================================================
-// ========== ORDER SLIP FUNCTIONS ==========
-// ============================================================
-
+// ========== RENDER ORDER SLIP PAGE - WITH DATE FILTER ==========
 async function renderOrderSlipPage() {
   const container = document.getElementById("orderslipContainer");
   const emptyMessage = document.getElementById("emptyOrderslipMessage");
+  const emptyFiltered = document.getElementById(
+    "emptyFilteredOrderslipMessage",
+  );
 
   if (!container) return;
 
@@ -1309,14 +1540,30 @@ async function renderOrderSlipPage() {
     }
   }
 
+  // 🔥 If no slips at all
   if (slips.length === 0) {
     container.innerHTML = "";
     if (emptyMessage) emptyMessage.style.display = "block";
+    if (emptyFiltered) emptyFiltered.style.display = "none";
     return;
   }
-  if (emptyMessage) emptyMessage.style.display = "none";
 
-  const sortedSlips = sortOrdersByLastUpdated(slips);
+  // 🔥 Apply date filter
+  const filteredSlips = filterOrderslipsByDate(slips);
+
+  // 🔥 If no slips after date filter
+  if (filteredSlips.length === 0) {
+    container.innerHTML = "";
+    if (emptyMessage) emptyMessage.style.display = "none";
+    if (emptyFiltered) emptyFiltered.style.display = "block";
+    return;
+  }
+
+  // Hide both empty messages
+  if (emptyMessage) emptyMessage.style.display = "none";
+  if (emptyFiltered) emptyFiltered.style.display = "none";
+
+  const sortedSlips = sortOrdersByLastUpdated(filteredSlips);
   const unreadOrders =
     JSON.parse(localStorage.getItem("silentBite_unreadOrders")) || [];
 
@@ -1348,6 +1595,15 @@ async function renderOrderSlipPage() {
       declineReason = "No reason provided";
     }
 
+    // Format the order date
+    const orderDate = new Date(slip.timestamp).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
     html += `
       <div class="orderslip-card ${(hasUpdate && isNewUpdate) || (unreadDeclined && slip.status === "declined") ? "new-update" : ""}" 
            data-order="${slip.orderNumber}" 
@@ -1368,6 +1624,10 @@ async function renderOrderSlipPage() {
         <div class="orderslip-number">
           <span class="big-number">${slip.orderNumberFormatted}</span>
           <span class="number-label">ORDER NUMBER</span>
+        </div>
+
+        <div style="font-size: 0.7rem; color: #888; margin-bottom: 8px;">
+          📅 ${orderDate}
         </div>
         
         ${
@@ -1408,6 +1668,28 @@ async function renderOrderSlipPage() {
   });
 
   container.innerHTML = html;
+
+  container.innerHTML = html;
+
+  // 🔥 CHECK FOR RECENTLY COMPLETED ORDERS TO SHOW RATE PROMPT
+  setTimeout(() => {
+    // Check for completed orders in session storage
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith("silentBite_completedOrder_")) {
+        const orderData = JSON.parse(sessionStorage.getItem(key));
+        const orderNum = key.replace("silentBite_completedOrder_", "");
+
+        // Only show once per session
+        const shownKey = `silentBite_ratePromptShown_${orderNum}`;
+        if (!sessionStorage.getItem(shownKey)) {
+          sessionStorage.setItem(shownKey, "true");
+          showRatePromptModal(orderData);
+          break; // Only show one prompt at a time
+        }
+      }
+    }
+  }, 1000);
 }
 
 function sortOrdersByLastUpdated(orders) {
@@ -1712,23 +1994,39 @@ async function syncOrderStatusFromServer() {
   }
 }
 
+// ========== MARK ORDER UPDATES AS READ (FILTER-AWARE) ==========
 function markOrderUpdatesAsRead() {
-  if (unreadOrderUpdates.length === 0) return;
-  unreadOrderUpdates = [];
+  console.log("👁️ Marking updates as read (filtered)");
+
+  // Get filtered order numbers
+  let slips = getAllOrderSlips();
+  const filteredSlips = filterOrderslipsByDate(slips);
+  const filteredOrderNumbers = filteredSlips.map((s) => s.orderNumber);
+
+  // 🔥 Only remove unread updates for the FILTERED orders
+  unreadOrderUpdates = unreadOrderUpdates.filter(
+    (u) => !filteredOrderNumbers.includes(u.orderNumber),
+  );
+
   localStorage.setItem(
     "silentBite_unreadOrders",
     JSON.stringify(unreadOrderUpdates),
   );
-  updateOrderSlipBadge();
-}
 
+  // Update both badges
+  updateOrderSlipBadge();
+  updateActiveOrdersBadge();
+}
+// ========== UPDATE ORDER SLIP BADGE (RED - RIGHT) ==========
 function updateOrderSlipBadge() {
   const badge = document.getElementById("orderSlipBadge");
   const unreadCount = unreadOrderUpdates.length;
 
+  console.log("🔴 Unread updates count:", unreadCount);
+
   if (badge) {
     if (unreadCount > 0) {
-      badge.textContent = unreadCount;
+      badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
       badge.style.display = "flex";
       badge.style.animation = "pulse-badge 1.5s ease-in-out infinite";
     } else {
@@ -1736,7 +2034,12 @@ function updateOrderSlipBadge() {
       badge.style.animation = "none";
     }
   }
+
+  // Also update the nav icon red badge
   updateNavIconBadge();
+
+  // 🔥 ALSO update the blue badge (active orders)
+  updateActiveOrdersBadge();
 }
 
 function updateNavIconBadge() {
@@ -1777,7 +2080,7 @@ function updateNavIconBadge() {
     }
   }
 }
-
+// ========== CHECK ORDER UPDATES (WITH RATE PROMPT) ==========
 async function checkOrderUpdates() {
   const customerNumber = getCustomerNumber();
   if (!customerNumber) return;
@@ -1791,6 +2094,7 @@ async function checkOrderUpdates() {
     const serverOrders = await response.json();
     let localSlips = getAllOrderSlips();
     let hasUpdates = false;
+    let newUnread = [];
 
     serverOrders.forEach((serverOrder) => {
       const localSlip = localSlips.find(
@@ -1801,32 +2105,126 @@ async function checkOrderUpdates() {
         const localStatus = localSlip.status || "pending";
         const serverStatus = serverOrder.status || "pending";
 
+        // ========== STATUS CHANGED ==========
         if (localStatus !== serverStatus) {
+          console.log(
+            `🔄 Order ${serverOrder.orderNumber}: ${localStatus} → ${serverStatus}`,
+          );
+
+          // Add notification (except initial pending)
+          if (localStatus !== "pending" || serverStatus !== "pending") {
+            const alreadyUnread = unreadOrderUpdates.some(
+              (u) => u.orderNumber === serverOrder.orderNumber,
+            );
+
+            if (!alreadyUnread) {
+              let declineReason = null;
+              if (serverStatus === "declined") {
+                declineReason = serverOrder.declineReason || null;
+              }
+
+              newUnread.push({
+                orderNumber: serverOrder.orderNumber,
+                orderNumberFormatted:
+                  serverOrder.orderNumberFormatted ||
+                  `#${serverOrder.orderNumber.toString().padStart(3, "0")}`,
+                newStatus: serverStatus,
+                declineReason: declineReason,
+                timestamp: new Date().toISOString(),
+              });
+            }
+          }
+
+          // 🔥 UPDATE LOCAL SLIP WITH FULL DATA
           localSlip.status = serverStatus;
           localSlip.estimatedTime =
             serverOrder.estimatedTime || localSlip.estimatedTime;
           localSlip.lastUpdated = new Date().toISOString();
+          localSlip.items = serverOrder.items || localSlip.items;
+          localSlip.orderNumberFormatted =
+            serverOrder.orderNumberFormatted || localSlip.orderNumberFormatted;
+
           if (serverStatus === "declined" && serverOrder.declineReason) {
             localSlip.declineReason = serverOrder.declineReason;
+          } else if (serverStatus !== "declined") {
+            localSlip.declineReason = null;
           }
+
           hasUpdates = true;
+
+          // ============================================================
+          // 🔥🔥🔥 CHECK IF ORDER WAS JUST COMPLETED - SHOW RATE PROMPT
+          // ============================================================
+          if (serverStatus === "completed") {
+            console.log(`✅ Order ${serverOrder.orderNumber} completed!`);
+            console.log(`   Will show rate prompt for:`, localSlip.items);
+
+            // Update local slip with completed items
+            const completedSlip = { ...localSlip };
+
+            // Store for later (in case customer navigates)
+            sessionStorage.setItem(
+              `silentBite_completedOrder_${serverOrder.orderNumber}`,
+              JSON.stringify(completedSlip),
+            );
+
+            // Add to pending ratings
+            if (typeof addToPendingRatings === "function") {
+              addToPendingRatings(completedSlip);
+              console.log("   ⭐ Added to pending ratings");
+            }
+
+            // Update rate badge
+            if (typeof updateRateBadge === "function") {
+              updateRateBadge();
+            }
+
+            // 🔥 SHOW THE PROMPT MODAL IMMEDIATELY
+            // (works from any page since it's an overlay)
+            setTimeout(() => {
+              console.log("   🎉 Showing rate prompt modal...");
+              if (typeof showRatePromptModal === "function") {
+                showRatePromptModal(completedSlip);
+              } else {
+                console.warn("⚠️ showRatePromptModal not defined!");
+              }
+            }, 800);
+          }
+          // ============================================================
         }
       }
     });
 
+    // Save new notifications
+    if (newUnread.length > 0) {
+      unreadOrderUpdates = [...unreadOrderUpdates, ...newUnread];
+      localStorage.setItem(
+        "silentBite_unreadOrders",
+        JSON.stringify(unreadOrderUpdates),
+      );
+    }
+
+    // Save updated slips
     if (hasUpdates) {
       localStorage.setItem("silentBite_orderSlips", JSON.stringify(localSlips));
       orderSlips = localSlips;
-      updateOrderSlipBadge();
+
       if (document.getElementById("orderslipContainer")) {
         renderOrderSlipPage();
       }
+    }
+
+    // Update badges
+    if (typeof updateAllBadges === "function") {
+      updateAllBadges();
+    }
+    if (typeof updateRateBadge === "function") {
+      updateRateBadge();
     }
   } catch (error) {
     console.log("Error checking order updates:", error.message);
   }
 }
-
 // ============================================================
 // ========== DIETARY FUNCTIONS ==========
 // ============================================================
@@ -2101,22 +2499,18 @@ function initBottomNav() {
     btn.addEventListener("click", () => {
       const action = btn.dataset.nav;
       if (action === "menu") {
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.location.href = "menu.html"; // Changed: always go to menu
       } else if (action === "cart") {
         window.location.href = "cart.html";
-      } else if (action === "payment") {
-        if (cart.length === 0) {
-          showEmptyCartModal();
-        } else {
-          window.location.href = "payment.html";
-        }
+      } else if (action === "rate") {
+        // 🔥 Navigate to rate page
+        window.location.href = "rate.html";
       } else if (action === "orderslip") {
         window.location.href = "orderslip.html";
       }
     });
   });
 }
-
 // ============================================================
 // ========== MIGRATE OLD ORDER SLIPS ==========
 // ============================================================
@@ -2153,7 +2547,6 @@ function migrateOrderSlips() {
 // ============================================================
 // ========== INITIALIZE ==========
 // ============================================================
-
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🚀 Script loaded, initializing...");
 
@@ -2162,6 +2555,9 @@ document.addEventListener("DOMContentLoaded", () => {
   loadPrefs();
   saveCart();
   updateCartBadge();
+
+  // 🔥 INITIALIZE BOTTOM BAR AUTO-HIDE
+  initScrollHideBottomBar();
 
   // ========== MENU PAGE ==========
   if (document.getElementById("menuGrid")) {
@@ -2181,13 +2577,40 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // Start checking for order updates
+    // 🔍 Initialize search bar state (closed by default)
+    const searchBar = document.getElementById("menuSearchBar");
+    if (searchBar) {
+      searchBar.classList.remove("open");
+      isSearchBarOpen = false;
+    }
+
+    // 🔥 INITIALIZE DIETARY ACCORDION
+    initDietAccordion();
+
+    document.querySelectorAll(".cat-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        currentCategory = btn.dataset.cat;
+        renderMenu();
+        document
+          .querySelectorAll(".cat-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+
+    // 🔥 UPDATE RATE BADGE
+    updateRateBadge();
+
+    const savedFilter =
+      localStorage.getItem("silentBite_orderslipFilter") || "all";
+    orderslipDateFilter = savedFilter;
+
+    updateAllBadges();
     checkOrderUpdates();
-    updateOrderSlipBadge();
 
     setInterval(() => {
       checkOrderUpdates();
-    }, 15000);
+    }, 10000);
   }
 
   // ========== CART PAGE ==========
@@ -2207,6 +2630,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ========== RATE PAGE ==========
+  if (document.getElementById("rateContainer")) {
+    console.log("📋 Rate page detected");
+    renderRatePage();
+    initBottomNav();
+
+    // Check for pending ratings every 10 seconds
+    setInterval(() => {
+      renderRatePage();
+    }, 10000);
+  }
+
   // ========== PAYMENT PAGE ==========
   if (document.getElementById("orderSummaryList")) {
     console.log("📋 Payment page detected");
@@ -2221,6 +2656,30 @@ document.addEventListener("DOMContentLoaded", () => {
   // ========== ORDER SLIP PAGE ==========
   if (document.getElementById("orderslipContainer")) {
     console.log("📋 Order slip page detected");
+
+    const orderslipFilterSelect = document.getElementById(
+      "orderslipDateFilter",
+    );
+    if (orderslipFilterSelect) {
+      orderslipFilterSelect.value = orderslipDateFilter;
+    }
+
+    const customRange = document.getElementById("orderslipCustomDateRange");
+    if (orderslipDateFilter === "custom" && customRange) {
+      customRange.style.display = "flex";
+
+      const fromInput = document.getElementById("orderslipCustomDateFrom");
+      const toInput = document.getElementById("orderslipCustomDateTo");
+
+      if (fromInput && orderslipCustomDateFrom) {
+        fromInput.value = orderslipCustomDateFrom;
+      }
+      if (toInput && orderslipCustomDateTo) {
+        toInput.value = orderslipCustomDateTo;
+      }
+    }
+
+    updateOrderslipFilterStatus();
     renderOrderSlipPage();
 
     setInterval(() => {
@@ -2235,7 +2694,1244 @@ document.addEventListener("DOMContentLoaded", () => {
     prefBtn.addEventListener("click", () => showDietaryModal(() => {}));
   }
 
+  // 🔥 STEP 5: CHECK FOR PENDING COMPLETED ORDERS (RATE PROMPTS)
+  setTimeout(() => {
+    if (typeof checkForCompletedOrdersToRate === "function") {
+      checkForCompletedOrdersToRate();
+    }
+  }, 2000);
+
   console.log("✅ Initialization complete");
 });
+// 🔥 Re-render recommendations when window resizes (mobile/desktop switch)
+let resizeTimeout;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    // Only re-render if on menu page
+    if (
+      document.getElementById("recItemsList") &&
+      typeof renderRecommendations === "function"
+    ) {
+      // 🔥 Clean up any running ticker
+      if (tickerScrollInterval) {
+        cancelAnimationFrame(tickerScrollInterval);
+        tickerScrollInterval = null;
+      }
 
-console.log("✅ script.js loaded successfully!");
+      renderRecommendations();
+    }
+  }, 300);
+});
+
+// ============================================================
+// ========== ACTIVE ORDER SLIP BADGE (BLUE - LEFT) ==========
+// ============================================================
+
+// ========== GET ACTIVE ORDERS COUNT (FILTER-AWARE) ==========
+function getActiveOrdersCount() {
+  let slips = getAllOrderSlips();
+
+  // 🔥 FILTER BY DATE FIRST
+  slips = filterOrderslipsByDate(slips);
+
+  return slips.filter(
+    (slip) =>
+      slip.status === "pending" ||
+      slip.status === "confirmed" ||
+      slip.status === "preparing" ||
+      slip.status === "ready",
+  ).length;
+}
+
+// ========== GET UNREAD UPDATES COUNT (FILTER-AWARE) ==========
+function getUnreadUpdatesCount() {
+  let slips = getAllOrderSlips();
+
+  // 🔥 FILTER BY DATE FIRST
+  slips = filterOrderslipsByDate(slips);
+
+  // Get only the order numbers that match the filter
+  const filteredOrderNumbers = slips.map((s) => s.orderNumber);
+
+  // Filter unread updates to only include those orders
+  return unreadOrderUpdates.filter((u) =>
+    filteredOrderNumbers.includes(u.orderNumber),
+  ).length;
+}
+
+// ========== UPDATE ACTIVE ORDERS BADGE (BLUE - LEFT) ==========
+function updateActiveOrdersBadge() {
+  const badge = document.getElementById("orderSlipActiveBadge");
+  const activeCount = getActiveOrdersCount();
+
+  console.log("🔵 Active orders count (filtered):", activeCount);
+
+  if (badge) {
+    if (activeCount > 0) {
+      badge.textContent = activeCount > 99 ? "99+" : activeCount;
+      badge.style.display = "flex";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+
+  updateNavIconActiveBadge(activeCount);
+}
+
+// Update nav icon blue badge (for dynamically created icons)
+function updateNavIconActiveBadge(count) {
+  const navOrderslip = document.querySelector(
+    '.nav-icon[data-nav="orderslip"]',
+  );
+  if (navOrderslip) {
+    // Remove existing active badge
+    const existingBadge = navOrderslip.querySelector(".nav-badge-active");
+    if (existingBadge) existingBadge.remove();
+
+    if (count > 0) {
+      const badge = document.createElement("span");
+      badge.className = "nav-badge-active";
+      badge.style.cssText = `
+        position: absolute;
+        top: -8px;
+        left: -10px;
+        background: #007bff;
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 50%;
+        min-width: 20px;
+        height: 20px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        z-index: 10;
+      `;
+      badge.textContent = count > 99 ? "99+" : count;
+      navOrderslip.style.position = "relative";
+      navOrderslip.appendChild(badge);
+    }
+  }
+}
+
+// ============================================================
+// ========== UPDATE ALL BADGES ==========
+// ============================================================
+
+function updateAllBadges() {
+  updateActiveOrdersBadge();
+  updateOrderSlipBadge();
+}
+
+// ========== APPLY ORDER SLIP DATE FILTER (WITH PERSISTENCE) ==========
+function applyOrderslipDateFilter() {
+  const filterSelect = document.getElementById("orderslipDateFilter");
+  if (!filterSelect) return;
+
+  orderslipDateFilter = filterSelect.value;
+
+  // 🔥 SAVE FILTER TO LOCALSTORAGE
+  localStorage.setItem("silentBite_orderslipFilter", orderslipDateFilter);
+
+  const customRange = document.getElementById("orderslipCustomDateRange");
+  if (orderslipDateFilter === "custom") {
+    if (customRange) customRange.style.display = "flex";
+    const fromInput = document.getElementById("orderslipCustomDateFrom");
+    const toInput = document.getElementById("orderslipCustomDateTo");
+
+    if (fromInput && fromInput.value) {
+      orderslipCustomDateFrom = fromInput.value;
+    }
+    if (toInput && toInput.value) {
+      orderslipCustomDateTo = toInput.value;
+    }
+
+    if (!orderslipCustomDateFrom) {
+      const today = new Date().toISOString().split("T")[0];
+      fromInput.value = today;
+      orderslipCustomDateFrom = today;
+    }
+    if (!orderslipCustomDateTo) {
+      const today = new Date().toISOString().split("T")[0];
+      toInput.value = today;
+      orderslipCustomDateTo = today;
+    }
+
+    // 🔥 SAVE CUSTOM DATES
+    localStorage.setItem(
+      "silentBite_orderslipCustomFrom",
+      orderslipCustomDateFrom,
+    );
+    localStorage.setItem("silentBite_orderslipCustomTo", orderslipCustomDateTo);
+  } else {
+    if (customRange) customRange.style.display = "none";
+    orderslipCustomDateFrom = null;
+    orderslipCustomDateTo = null;
+    // 🔥 CLEAR CUSTOM DATES
+    localStorage.removeItem("silentBite_orderslipCustomFrom");
+    localStorage.removeItem("silentBite_orderslipCustomTo");
+  }
+
+  // Update filter status display
+  updateOrderslipFilterStatus();
+
+  // Re-render the order slip page
+  renderOrderSlipPage();
+
+  // 🔥 UPDATE BADGES BASED ON NEW FILTER
+  updateAllBadges();
+}
+
+// ========== APPLY CUSTOM DATE RANGE (WITH PERSISTENCE) ==========
+function applyOrderslipCustomDateRange() {
+  const fromInput = document.getElementById("orderslipCustomDateFrom");
+  const toInput = document.getElementById("orderslipCustomDateTo");
+
+  if (!fromInput || !toInput) {
+    showToast("⚠️ Please select both From and To dates");
+    return;
+  }
+
+  if (!fromInput.value || !toInput.value) {
+    showToast("⚠️ Please select both From and To dates");
+    return;
+  }
+
+  const fromDate = new Date(fromInput.value);
+  const toDate = new Date(toInput.value);
+
+  if (fromDate > toDate) {
+    showToast("⚠️ 'From' date cannot be later than 'To' date");
+    return;
+  }
+
+  orderslipCustomDateFrom = fromInput.value;
+  orderslipCustomDateTo = toInput.value;
+
+  // 🔥 SAVE TO LOCALSTORAGE
+  localStorage.setItem(
+    "silentBite_orderslipCustomFrom",
+    orderslipCustomDateFrom,
+  );
+  localStorage.setItem("silentBite_orderslipCustomTo", orderslipCustomDateTo);
+
+  const filterSelect = document.getElementById("orderslipDateFilter");
+  if (filterSelect) {
+    filterSelect.value = "custom";
+    orderslipDateFilter = "custom";
+    localStorage.setItem("silentBite_orderslipFilter", "custom");
+  }
+
+  updateOrderslipFilterStatus();
+  renderOrderSlipPage();
+  updateAllBadges();
+
+  showToast(
+    `✅ Showing orders from ${formatOrderslipDate(fromDate)} to ${formatOrderslipDate(toDate)}`,
+  );
+}
+// ========== GET ORDER SLIP DATE RANGE ==========
+function getOrderslipDateRange(filter) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let from = new Date(today);
+  let to = new Date(today);
+  let label = "";
+
+  switch (filter) {
+    case "all":
+      from = new Date(2000, 0, 1);
+      to = new Date(2100, 11, 31);
+      label = "All Orders";
+      break;
+    case "today":
+      from = new Date(today);
+      to = new Date(today);
+      label = "Today";
+      break;
+    case "yesterday":
+      from = new Date(today);
+      from.setDate(from.getDate() - 1);
+      to = new Date(from);
+      label = "Yesterday";
+      break;
+    case "thisweek":
+      from = new Date(today);
+      from.setDate(from.getDate() - from.getDay());
+      to = new Date(today);
+      label = "This Week";
+      break;
+    case "thismonth":
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = new Date(today);
+      label = "This Month";
+      break;
+    case "thisyear":
+      from = new Date(now.getFullYear(), 0, 1);
+      to = new Date(today);
+      label = "This Year";
+      break;
+    case "custom":
+      if (orderslipCustomDateFrom && orderslipCustomDateTo) {
+        from = new Date(orderslipCustomDateFrom);
+        to = new Date(orderslipCustomDateTo);
+        to.setHours(23, 59, 59, 999);
+        label = `${formatOrderslipDate(from)} - ${formatOrderslipDate(to)}`;
+      } else {
+        from = new Date(today);
+        to = new Date(today);
+        label = "Custom Date";
+      }
+      break;
+    default:
+      from = new Date(2000, 0, 1);
+      to = new Date(2100, 11, 31);
+      label = "All Orders";
+  }
+
+  from.setHours(0, 0, 0, 0);
+  to.setHours(23, 59, 59, 999);
+
+  return { from, to, label };
+}
+
+// ========== FORMAT DATE FOR ORDER SLIP ==========
+function formatOrderslipDate(date) {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// ========== UPDATE FILTER STATUS DISPLAY ==========
+function updateOrderslipFilterStatus() {
+  const statusDiv = document.getElementById("orderslipFilterStatus");
+  const label = document.getElementById("orderslipFilterLabel");
+
+  if (statusDiv && label) {
+    const range = getOrderslipDateRange(orderslipDateFilter);
+    label.textContent = range.label;
+
+    if (orderslipDateFilter === "all") {
+      statusDiv.style.display = "none";
+    } else {
+      statusDiv.style.display = "block";
+    }
+  }
+}
+
+// ========== FILTER ORDER SLIPS BY DATE ==========
+function filterOrderslipsByDate(slips) {
+  if (orderslipDateFilter === "all") {
+    return slips;
+  }
+
+  const range = getOrderslipDateRange(orderslipDateFilter);
+
+  return slips.filter((slip) => {
+    const slipDate = new Date(slip.timestamp);
+    return slipDate >= range.from && slipDate <= range.to;
+  });
+}
+// ========== RESET ORDER SLIP DATE FILTER ==========
+function resetOrderslipDateFilter() {
+  const filterSelect = document.getElementById("orderslipDateFilter");
+  if (filterSelect) {
+    filterSelect.value = "all";
+    orderslipDateFilter = "all";
+  }
+
+  const customRange = document.getElementById("orderslipCustomDateRange");
+  if (customRange) customRange.style.display = "none";
+
+  orderslipCustomDateFrom = null;
+  orderslipCustomDateTo = null;
+
+  // 🔥 CLEAR FROM LOCALSTORAGE
+  localStorage.setItem("silentBite_orderslipFilter", "all");
+  localStorage.removeItem("silentBite_orderslipCustomFrom");
+  localStorage.removeItem("silentBite_orderslipCustomTo");
+
+  updateOrderslipFilterStatus();
+  renderOrderSlipPage();
+  updateAllBadges();
+}
+
+// ============================================================
+// ========== BOTTOM BAR AUTO-HIDE ON SCROLL ==========
+// ============================================================
+
+let lastScrollY = 0;
+let scrollThreshold = 10; // Minimum scroll distance to trigger
+let isBottomBarHidden = false;
+let scrollTimeout = null;
+
+function initScrollHideBottomBar() {
+  // Only run on mobile (screen width <= 768px)
+  const isMobile = () => window.innerWidth <= 768;
+
+  // Find all bottom navigation bars
+  const getBottomBars = () => {
+    const bars = [];
+
+    // Menu/Cart/Payment/OrderSlip bottom bar
+    const bottomBar = document.querySelector(".bottom-bar");
+    if (bottomBar) bars.push(bottomBar);
+
+    // Cart checkout bar
+    const checkoutBar = document.querySelector(".checkout-bar");
+    if (checkoutBar) bars.push(checkoutBar);
+
+    // Any other fixed bottom elements
+    const orderslipContainer = document.querySelector(".orderslip-page");
+    if (orderslipContainer) {
+      const orderslipBar = orderslipContainer.querySelector(".bottom-bar");
+      if (orderslipBar && !bars.includes(orderslipBar)) {
+        bars.push(orderslipBar);
+      }
+    }
+
+    return bars;
+  };
+
+  // Handle scroll event
+  function handleScroll() {
+    if (!isMobile()) {
+      // Make sure bars are visible on desktop
+      getBottomBars().forEach((bar) => {
+        bar.classList.remove("hidden");
+      });
+      isBottomBarHidden = false;
+      return;
+    }
+
+    const currentScrollY = window.scrollY || window.pageYOffset;
+    const scrollDiff = currentScrollY - lastScrollY;
+
+    // Scroll down - hide bar
+    if (scrollDiff > scrollThreshold && currentScrollY > 100) {
+      if (!isBottomBarHidden) {
+        getBottomBars().forEach((bar) => {
+          bar.classList.add("hidden");
+        });
+        isBottomBarHidden = true;
+      }
+    }
+    // Scroll up - show bar
+    else if (scrollDiff < -scrollThreshold) {
+      if (isBottomBarHidden) {
+        getBottomBars().forEach((bar) => {
+          bar.classList.remove("hidden");
+        });
+        isBottomBarHidden = false;
+      }
+    }
+
+    // Always show bar when at the very top
+    if (currentScrollY < 50) {
+      if (isBottomBarHidden) {
+        getBottomBars().forEach((bar) => {
+          bar.classList.remove("hidden");
+        });
+        isBottomBarHidden = false;
+      }
+    }
+
+    // Always show bar when at the very bottom
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    if (currentScrollY + windowHeight >= documentHeight - 50) {
+      if (isBottomBarHidden) {
+        getBottomBars().forEach((bar) => {
+          bar.classList.remove("hidden");
+        });
+        isBottomBarHidden = false;
+      }
+    }
+
+    lastScrollY = currentScrollY;
+  }
+
+  // Debounced scroll handler for performance
+  function debouncedScroll() {
+    if (scrollTimeout) {
+      clearTimeout(scrollTimeout);
+    }
+    scrollTimeout = setTimeout(handleScroll, 10);
+  }
+
+  // Add scroll listener
+  window.addEventListener("scroll", debouncedScroll, { passive: true });
+
+  // Handle window resize
+  window.addEventListener("resize", () => {
+    if (!isMobile()) {
+      getBottomBars().forEach((bar) => {
+        bar.classList.remove("hidden");
+      });
+      isBottomBarHidden = false;
+    }
+  });
+
+  // Handle orientation change
+  window.addEventListener("orientationchange", () => {
+    setTimeout(() => {
+      getBottomBars().forEach((bar) => {
+        bar.classList.remove("hidden");
+      });
+      isBottomBarHidden = false;
+      lastScrollY = window.scrollY;
+    }, 100);
+  });
+
+  console.log("✅ Bottom bar auto-hide initialized");
+}
+
+// ============================================================
+// ========== RATING REMINDER SYSTEM ==========
+// ============================================================
+
+// Storage key for pending ratings
+const PENDING_RATINGS_KEY = "silentBite_pendingRatings";
+
+// Get pending ratings from localStorage
+function getPendingRatings() {
+  return JSON.parse(localStorage.getItem(PENDING_RATINGS_KEY)) || [];
+}
+
+// Save pending ratings to localStorage
+function savePendingRatings(ratings) {
+  localStorage.setItem(PENDING_RATINGS_KEY, JSON.stringify(ratings));
+}
+
+// Get rated dish IDs from localStorage
+function getRatedDishes() {
+  return JSON.parse(localStorage.getItem("silentBite_ratedDishes")) || {};
+}
+
+// Mark a dish as rated
+function markDishAsRated(itemId, orderNumber) {
+  const rated = getRatedDishes();
+  const key = `${itemId}-${orderNumber}`;
+  rated[key] = {
+    itemId: itemId,
+    orderNumber: orderNumber,
+    ratedAt: new Date().toISOString(),
+  };
+  localStorage.setItem("silentBite_ratedDishes", JSON.stringify(rated));
+}
+
+// Check if a dish has been rated
+function isDishRated(itemId, orderNumber) {
+  const rated = getRatedDishes();
+  const key = `${itemId}-${orderNumber}`;
+  return !!rated[key];
+}
+
+// ========== ADD DISH TO PENDING RATINGS ==========
+function addToPendingRatings(orderSlip) {
+  if (!orderSlip || !orderSlip.items) return;
+
+  const pending = getPendingRatings();
+  const orderNumber = orderSlip.orderNumber;
+
+  orderSlip.items.forEach((item) => {
+    // Skip if already rated
+    if (isDishRated(item.id, orderNumber)) return;
+
+    // Skip if already in pending
+    const exists = pending.some(
+      (p) => p.itemId === item.id && p.orderNumber === orderNumber,
+    );
+    if (exists) return;
+
+    // Find the full item data from menuData
+    const menuItem = menuData.find((m) => m.id === item.id);
+
+    pending.push({
+      itemId: item.id,
+      itemName: item.name,
+      itemImg: menuItem ? menuItem.img : item.img || "default.jpg",
+      orderNumber: orderNumber,
+      orderNumberFormatted: orderSlip.orderNumberFormatted || `#${orderNumber}`,
+      quantity: item.quantity,
+      addedAt: new Date().toISOString(),
+    });
+  });
+
+  savePendingRatings(pending);
+  updateRateBadge();
+
+  console.log("⭐ Added to pending ratings:", pending);
+}
+
+// ========== GET PENDING RATINGS COUNT ==========
+function getPendingRatingsCount() {
+  return getPendingRatings().length;
+}
+
+// ========== UPDATE RATE BADGE ==========
+function updateRateBadge() {
+  const badge = document.getElementById("rateBadge");
+  const navRate = document.querySelector('.nav-icon[data-nav="rate"]');
+  const count = getPendingRatingsCount();
+
+  console.log("⭐ Pending ratings count:", count);
+
+  if (badge) {
+    if (count > 0) {
+      badge.textContent = count > 99 ? "99+" : count;
+      badge.style.display = "flex";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+
+  // Also update nav icon badge
+  if (navRate) {
+    const existingBadge = navRate.querySelector(".nav-badge");
+    if (existingBadge && existingBadge.id !== "rateBadge") {
+      existingBadge.remove();
+    }
+
+    if (count > 0 && !document.getElementById("rateBadge")) {
+      const badge = document.createElement("span");
+      badge.className = "nav-badge";
+      badge.style.cssText = `
+        position: absolute;
+        top: -8px;
+        right: -10px;
+        background: #f5a623;
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 50%;
+        min-width: 20px;
+        height: 20px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        z-index: 10;
+      `;
+      badge.textContent = count > 99 ? "99+" : count;
+      navRate.style.position = "relative";
+      navRate.appendChild(badge);
+    }
+  }
+}
+// ========== SHOW RATE PROMPT MODAL (WORKS FROM ANY PAGE) ==========
+function showRatePromptModal(orderSlip) {
+  console.log("🎉 showRatePromptModal called with:", orderSlip);
+
+  // Validate input
+  if (!orderSlip || !orderSlip.items || orderSlip.items.length === 0) {
+    console.warn("⚠️ No items to rate");
+    return;
+  }
+
+  // Check if all items are already rated
+  const unratedItems = orderSlip.items.filter((item) =>
+    typeof isDishRated === "function"
+      ? !isDishRated(item.id, orderSlip.orderNumber)
+      : true,
+  );
+
+  if (unratedItems.length === 0) {
+    console.log("All dishes already rated for this order");
+    return;
+  }
+
+  // Check if we already showed prompt for this order in this session
+  const promptedKey = `silentBite_promptedRate_${orderSlip.orderNumber}`;
+  if (sessionStorage.getItem(promptedKey)) {
+    console.log("⚠️ Already prompted for this order in this session");
+    return;
+  }
+
+  sessionStorage.setItem(promptedKey, "true");
+
+  // Remove any existing prompt
+  const existingPrompt = document.getElementById("ratePromptOverlay");
+  if (existingPrompt) {
+    existingPrompt.remove();
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "rate-prompt-overlay";
+  overlay.id = "ratePromptOverlay";
+
+  overlay.innerHTML = `
+    <div class="rate-prompt-modal">
+      <div class="rate-prompt-header">
+        <span class="rate-prompt-title">Rate our dish!</span>
+      </div>
+      <div class="rate-prompt-body">
+        <h3>How was your food?</h3>
+        <p>Your order <strong>${orderSlip.orderNumberFormatted || "#" + orderSlip.orderNumber}</strong> has been completed!<br>Would you like to rate your dishes now?</p>
+        <div class="rate-prompt-actions">
+          <button class="rate-now-btn" id="rateNowBtn">
+            Rate Now
+          </button>
+          <button class="rate-later-btn" id="rateLaterBtn">
+            Rate Later
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  console.log("✅ Rate prompt modal displayed");
+
+  // Rate Now - Go to rate page
+  document.getElementById("rateNowBtn").addEventListener("click", () => {
+    if (typeof addToPendingRatings === "function") {
+      addToPendingRatings(orderSlip);
+    }
+    overlay.remove();
+    window.location.href = "rate.html";
+  });
+
+  // Rate Later - Close and show toast
+  document.getElementById("rateLaterBtn").addEventListener("click", () => {
+    if (typeof addToPendingRatings === "function") {
+      addToPendingRatings(orderSlip);
+    }
+    overlay.remove();
+    if (typeof showToast === "function") {
+      showToast("📝 You can rate your dishes later in the ⭐ Rate tab");
+    }
+  });
+
+  // Close on overlay click
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      if (typeof addToPendingRatings === "function") {
+        addToPendingRatings(orderSlip);
+      }
+      overlay.remove();
+    }
+  });
+}
+// Rate Now - Redirect to rate page
+document.getElementById("rateNowBtn").addEventListener("click", () => {
+  addToPendingRatings(orderSlip);
+  overlay.remove();
+  window.location.href = "rate.html";
+});
+
+// Rate Later - Add to pending and close
+document.getElementById("rateLaterBtn").addEventListener("click", () => {
+  addToPendingRatings(orderSlip);
+  overlay.remove();
+  showToast("📝 You can rate your dishes later in the Rate tab");
+});
+
+// Close on overlay click
+overlay.addEventListener("click", (e) => {
+  if (e.target === overlay) {
+    addToPendingRatings(orderSlip);
+    overlay.remove();
+  }
+});
+
+// ========== RENDER RATE PAGE ==========
+function renderRatePage() {
+  const container = document.getElementById("rateContainer");
+  const emptyMessage = document.getElementById("emptyRateMessage");
+
+  if (!container) return;
+
+  const pending = getPendingRatings();
+  const unratedPending = pending.filter(
+    (p) => !isDishRated(p.itemId, p.orderNumber),
+  );
+
+  // Update pending list if some were rated
+  if (unratedPending.length !== pending.length) {
+    savePendingRatings(unratedPending);
+  }
+
+  updateRateBadge();
+
+  if (unratedPending.length === 0) {
+    container.innerHTML = "";
+    if (emptyMessage) emptyMessage.style.display = "block";
+    return;
+  }
+
+  if (emptyMessage) emptyMessage.style.display = "none";
+
+  container.innerHTML = unratedPending
+    .map(
+      (item) => `
+    <div class="rate-card" onclick="goToRating(${item.itemId}, '${item.orderNumberFormatted}')">
+      <div class="rate-card-img">
+        <img 
+          src="${getImagePath(item.itemImg)}" 
+          alt="${item.itemName}"
+          onerror="this.src='https://placehold.co/70x70?text=🍽️'"
+        >
+      </div>
+      <div class="rate-card-details">
+        <div class="rate-card-name">${item.itemName}</div>
+        <div class="rate-card-order">Order ${item.orderNumberFormatted}</div>
+        <span class="rate-card-status">⭐ Tap to rate</span>
+      </div>
+      <div class="rate-card-arrow">›</div>
+    </div>
+  `,
+    )
+    .join("");
+}
+
+// ========== GO TO RATING PAGE ==========
+function goToRating(itemId, orderNumberFormatted) {
+  console.log(`⭐ Going to rating page for item ${itemId}`);
+  window.location.href = `ratings.html?id=${itemId}`;
+}
+
+// ============================================================
+// ========== DIETARY ACCORDION (MENU PAGE) ==========
+// ============================================================
+
+// ========== TOGGLE ACCORDION ==========
+function toggleDietAccordion() {
+  const content = document.getElementById("dietAccordionContent");
+  const arrow = document.getElementById("dietAccordionArrow");
+
+  if (!content || !arrow) return;
+
+  dietAccordionOpen = !dietAccordionOpen;
+
+  if (dietAccordionOpen) {
+    content.classList.add("open");
+    arrow.classList.add("open");
+  } else {
+    content.classList.remove("open");
+    arrow.classList.remove("open");
+  }
+
+  // When opening, sync checkboxes with current userDietary
+  if (dietAccordionOpen) {
+    syncAccordionCheckboxes();
+    updateAccordionActiveDisplay();
+  }
+}
+
+// ========== SYNC CHECKBOXES WITH CURRENT PREFERENCES ==========
+function syncAccordionCheckboxes() {
+  const veg = document.getElementById("menuDietVeg");
+  const vegan = document.getElementById("menuDietVegan");
+  const gf = document.getElementById("menuDietGF");
+  const pesc = document.getElementById("menuDietPesc");
+  const lc = document.getElementById("menuDietLC");
+  const hp = document.getElementById("menuDietHP");
+
+  if (veg) veg.checked = userDietary.vegetarian;
+  if (vegan) vegan.checked = userDietary.vegan;
+  if (gf) gf.checked = userDietary.glutenFree;
+  if (pesc) pesc.checked = userDietary.pescatarian;
+  if (lc) lc.checked = userDietary.lowCarb;
+  if (hp) hp.checked = userDietary.highProtein;
+
+  // Update visual selected state
+  document.querySelectorAll(".diet-filter-item").forEach((item) => {
+    const diet = item.dataset.diet;
+    if (userDietary[diet]) {
+      item.classList.add("selected");
+    } else {
+      item.classList.remove("selected");
+    }
+  });
+}
+
+// ========== TOGGLE INDIVIDUAL DIETARY ==========
+function toggleMenuDietary(diet) {
+  // Toggle the preference
+  userDietary[diet] = !userDietary[diet];
+
+  // Update visual state
+  const item = document.querySelector(`.diet-filter-item[data-diet="${diet}"]`);
+  if (item) {
+    if (userDietary[diet]) {
+      item.classList.add("selected");
+    } else {
+      item.classList.remove("selected");
+    }
+  }
+
+  // Update active display
+  updateAccordionActiveDisplay();
+}
+
+// ========== UPDATE ACTIVE DISPLAY ==========
+function updateAccordionActiveDisplay() {
+  const tagsContainer = document.getElementById("dietActiveTags");
+  const countBadge = document.getElementById("dietActiveCount");
+
+  if (!tagsContainer) return;
+
+  const activePrefs = [];
+  if (userDietary.vegetarian)
+    activePrefs.push({ emoji: "🌱", name: "Vegetarian" });
+  if (userDietary.vegan) activePrefs.push({ emoji: "🌿", name: "Vegan" });
+  if (userDietary.glutenFree)
+    activePrefs.push({ emoji: "🚫", name: "Gluten-Free" });
+  if (userDietary.pescatarian)
+    activePrefs.push({ emoji: "🐟", name: "Pescatarian" });
+  if (userDietary.lowCarb) activePrefs.push({ emoji: "🥗", name: "Low-Carb" });
+  if (userDietary.highProtein)
+    activePrefs.push({ emoji: "💪", name: "High-Protein" });
+
+  if (activePrefs.length === 0) {
+    tagsContainer.innerHTML =
+      '<span class="diet-no-active">No restrictions all items available</span>';
+    if (countBadge) countBadge.style.display = "none";
+  } else {
+    tagsContainer.innerHTML = activePrefs
+      .map((p) => `<span class="diet-tag-pill">${p.emoji} ${p.name}</span>`)
+      .join("");
+    if (countBadge) {
+      countBadge.textContent = activePrefs.length;
+      countBadge.style.display = "inline-block";
+    }
+  }
+}
+
+// ========== CLEAR ALL DIETARY ==========
+function clearMenuDietary() {
+  userDietary = {
+    vegetarian: false,
+    vegan: false,
+    glutenFree: false,
+    pescatarian: false,
+    lowCarb: false,
+    highProtein: false,
+  };
+
+  // Uncheck all checkboxes
+  const checkboxes = [
+    "menuDietVeg",
+    "menuDietVegan",
+    "menuDietGF",
+    "menuDietPesc",
+    "menuDietLC",
+    "menuDietHP",
+  ];
+  checkboxes.forEach((id) => {
+    const cb = document.getElementById(id);
+    if (cb) cb.checked = false;
+  });
+
+  // Clear visual selected state
+  document.querySelectorAll(".diet-filter-item").forEach((item) => {
+    item.classList.remove("selected");
+  });
+
+  // Update display
+  updateAccordionActiveDisplay();
+
+  // Save preferences
+  savePrefToLocal();
+
+  // Re-render
+  renderRecommendations();
+  renderMenu();
+
+  if (typeof showToast === "function") {
+    showToast("🍽️ Cleared all dietary filters");
+  }
+}
+
+// ========== APPLY DIETARY FILTERS ==========
+function applyMenuDietary() {
+  // Save preferences
+  savePrefToLocal();
+
+  // Update active display
+  updateAccordionActiveDisplay();
+
+  // Re-render recommendations and menu
+  renderRecommendations();
+  renderMenu();
+
+  // Count active preferences
+  const activeCount = Object.values(userDietary).filter(Boolean).length;
+
+  if (activeCount === 0) {
+    if (typeof showToast === "function") {
+      showToast("🍽️ Showing all items (no restrictions)");
+    }
+  } else {
+    if (typeof showToast === "function") {
+      showToast(
+        `✅ Applied ${activeCount} dietary filter${activeCount > 1 ? "s" : ""}`,
+      );
+    }
+  }
+
+  // Close the accordion after applying
+  setTimeout(() => {
+    const content = document.getElementById("dietAccordionContent");
+    const arrow = document.getElementById("dietAccordionArrow");
+    if (content && arrow) {
+      content.classList.remove("open");
+      arrow.classList.remove("open");
+      dietAccordionOpen = false;
+    }
+  }, 500);
+}
+
+// ========== INITIALIZE ACCORDION STATE ==========
+function initDietAccordion() {
+  // Sync checkboxes with current preferences
+  syncAccordionCheckboxes();
+  updateAccordionActiveDisplay();
+
+  // Set initial state (closed by default)
+  const content = document.getElementById("dietAccordionContent");
+  const arrow = document.getElementById("dietAccordionArrow");
+  if (content) content.classList.remove("open");
+  if (arrow) arrow.classList.remove("open");
+  dietAccordionOpen = false;
+}
+// ============================================================
+// ========== YOUTUBE-STYLE MENU SEARCH ==========
+// ============================================================
+
+// ========== OPEN SEARCH OVERLAY ==========
+function openSearchOverlay() {
+  const overlay = document.getElementById("searchOverlay");
+  const input = document.getElementById("menuSearchInput");
+
+  if (!overlay) return;
+
+  isSearchOverlayOpen = true;
+  overlay.classList.add("open");
+
+  // Prevent body scroll
+  document.body.style.overflow = "hidden";
+
+  // Focus input after animation
+  setTimeout(() => {
+    if (input) input.focus();
+  }, 300);
+}
+
+// ========== CLOSE SEARCH OVERLAY ==========
+function closeSearchOverlay() {
+  const overlay = document.getElementById("searchOverlay");
+  if (!overlay) return;
+
+  isSearchOverlayOpen = false;
+  overlay.classList.remove("open");
+
+  // Restore body scroll
+  document.body.style.overflow = "";
+
+  // Reset search state
+  resetSearchState();
+}
+
+// ========== RESET SEARCH STATE ==========
+function resetSearchState() {
+  const input = document.getElementById("menuSearchInput");
+  const clearBtn = document.getElementById("searchClearBtn");
+  const suggestions = document.getElementById("searchSuggestions");
+  const resultsList = document.getElementById("searchResultsList");
+  const noResults = document.getElementById("searchNoResults");
+
+  if (input) input.value = "";
+  currentSearchQuery = "";
+
+  if (clearBtn) clearBtn.style.display = "none";
+  if (suggestions) suggestions.style.display = "block";
+  if (resultsList) resultsList.style.display = "none";
+  if (noResults) noResults.style.display = "none";
+}
+
+// ========== HANDLE SEARCH KEYDOWN (Enter key) ==========
+function handleSearchKeydown(event) {
+  const input = event.target;
+  const clearBtn = document.getElementById("searchClearBtn");
+
+  // Show/hide clear button on typing
+  if (clearBtn) {
+    clearBtn.style.display = input.value.length > 0 ? "flex" : "none";
+  }
+
+  // Submit on Enter
+  if (event.key === "Enter") {
+    event.preventDefault();
+    submitSearch();
+  }
+}
+
+// ========== SUBMIT SEARCH ==========
+function submitSearch() {
+  const input = document.getElementById("menuSearchInput");
+  if (!input) return;
+
+  const query = input.value.trim().toLowerCase();
+
+  if (query.length === 0) {
+    // Show suggestions again
+    const suggestions = document.getElementById("searchSuggestions");
+    const resultsList = document.getElementById("searchResultsList");
+    const noResults = document.getElementById("searchNoResults");
+
+    if (suggestions) suggestions.style.display = "block";
+    if (resultsList) resultsList.style.display = "none";
+    if (noResults) noResults.style.display = "none";
+    return;
+  }
+
+  currentSearchQuery = query;
+  performSearch(query);
+}
+
+// ========== PERFORM SEARCH ==========
+function performSearch(query) {
+  const suggestions = document.getElementById("searchSuggestions");
+  const resultsList = document.getElementById("searchResultsList");
+  const noResults = document.getElementById("searchNoResults");
+  const noResultsQuery = document.getElementById("searchNoResultsQuery");
+
+  // Filter menu
+  const filtered = menuData.filter((item) => {
+    const nameMatch = item.name.toLowerCase().includes(query);
+    const categoryMatch = item.category.toLowerCase().includes(query);
+    const dietaryMatch = item.dietary.some((d) =>
+      d.toLowerCase().includes(query),
+    );
+    const ingredientsMatch =
+      item.ingredients &&
+      item.ingredients.some((ing) => ing.toLowerCase().includes(query));
+    const descriptionMatch =
+      item.description && item.description.toLowerCase().includes(query);
+
+    return (
+      nameMatch ||
+      categoryMatch ||
+      dietaryMatch ||
+      ingredientsMatch ||
+      descriptionMatch
+    );
+  });
+
+  // Hide suggestions
+  if (suggestions) suggestions.style.display = "none";
+
+  // No results
+  if (filtered.length === 0) {
+    if (resultsList) resultsList.style.display = "none";
+    if (noResults) {
+      noResults.style.display = "block";
+      if (noResultsQuery) {
+        noResultsQuery.textContent = `"${query}"`;
+      }
+    }
+    return;
+  }
+
+  // Show results
+  if (noResults) noResults.style.display = "none";
+  if (resultsList) {
+    resultsList.style.display = "block";
+
+    let html = `
+      <div class="search-results-header">
+        Found <strong>${filtered.length}</strong> ${
+          filtered.length === 1 ? "dish" : "dishes"
+        } for "<strong>${query}</strong>"
+      </div>
+    `;
+
+    filtered.forEach((item) => {
+      const rating = getItemRating(item.id);
+      const ratingHtml =
+        rating && rating.count > 0
+          ? `<span class="search-result-rating">${renderStars(rating.average)} (${rating.count})</span>`
+          : "";
+
+      html += `
+        <div class="search-result-item" onclick="openSearchResult(${item.id})">
+          <div class="search-result-thumb">
+            <img 
+              src="${getImagePath(item.img)}" 
+              alt="${item.name}"
+              onerror="this.src='https://placehold.co/110x80?text=🍽️'"
+            >
+          </div>
+          <div class="search-result-info">
+            <div class="search-result-name">${item.name}</div>
+            <div class="search-result-meta">
+              <span class="search-result-dietary">${item.dietary.join(", ")}</span>
+              ${ratingHtml}
+            </div>
+            <div class="search-result-price">₱${item.price}</div>
+          </div>
+        </div>
+      `;
+    });
+
+    resultsList.innerHTML = html;
+  }
+}
+
+// ========== OPEN SEARCH RESULT (go to dish modal) ==========
+function openSearchResult(itemId) {
+  // Close search overlay first
+  closeSearchOverlay();
+
+  // Small delay before opening modal
+  setTimeout(() => {
+    if (typeof showMealModal === "function") {
+      showMealModal(itemId);
+    }
+  }, 200);
+}
+
+// ========== QUICK SEARCH (from suggestion chips) ==========
+function quickSearch(query) {
+  const input = document.getElementById("menuSearchInput");
+  const clearBtn = document.getElementById("searchClearBtn");
+
+  if (input) {
+    input.value = query;
+    if (clearBtn) clearBtn.style.display = "flex";
+  }
+
+  currentSearchQuery = query.toLowerCase();
+  performSearch(currentSearchQuery);
+}
+
+// ========== CLEAR SEARCH INPUT ==========
+function clearSearchInput() {
+  const input = document.getElementById("menuSearchInput");
+  const clearBtn = document.getElementById("searchClearBtn");
+  const suggestions = document.getElementById("searchSuggestions");
+  const resultsList = document.getElementById("searchResultsList");
+  const noResults = document.getElementById("searchNoResults");
+
+  if (input) {
+    input.value = "";
+    input.focus();
+  }
+
+  currentSearchQuery = "";
+
+  if (clearBtn) clearBtn.style.display = "none";
+  if (suggestions) suggestions.style.display = "block";
+  if (resultsList) resultsList.style.display = "none";
+  if (noResults) noResults.style.display = "none";
+}

@@ -113,19 +113,27 @@
 
         <!-- Dashboard Page -->
         <div id="pageDashboard" class="staff-page-content active">
-          <!-- Stats Cards Row -->
-          <div class="admin-stats-row">
+          <!-- Stats Cards Row - Single Horizontal Row -->
+          <div class="admin-stats-row-horizontal">
             <div class="stat-card">
-              <div class="stat-label">📋 Total Orders Today</div>
-              <div class="stat-number" id="adminTodayOrders">0</div>
+              <div class="stat-label">⏳ Pending Orders</div>
+              <div class="stat-number" id="statPending">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">✅ Completed Orders</div>
+              <div class="stat-number" id="statCompleted">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">❌ Declined Orders</div>
+              <div class="stat-number" id="statDeclined">0</div>
             </div>
             <div class="stat-card">
               <div class="stat-label">💰 Revenue</div>
-              <div class="stat-number" id="adminRevenue">₱0</div>
+              <div class="stat-number" id="statRevenue">₱0</div>
             </div>
           </div>
 
-          <!-- Chart Placeholder -->
+          <!-- 🔥 SALES OVERVIEW CHART -->
           <div class="admin-chart-container">
             <div class="chart-header">
               <h2>📈 Sales Overview</h2>
@@ -154,30 +162,138 @@
               </div>
             </div>
             <div id="chartContainer" class="chart-container">
+              <!-- Chart will be rendered here -->
               <div style="text-align: center; padding: 2rem; color: #888">
                 <span style="font-size: 3rem">📊</span>
-                <p>Chart will be displayed here</p>
-                <p style="font-size: 0.85rem">
-                  Sales data visualization coming soon
-                </p>
+                <p>Loading chart data...</p>
               </div>
             </div>
+          </div>
+
+          <!-- 🔥 DATE FILTER -->
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 1rem;
+              flex-wrap: wrap;
+              background: white;
+              padding: 0.8rem 1.2rem;
+              border-radius: 12px;
+              border: 1px solid #f0e2d2;
+            "
+          >
+            <span style="font-weight: 600; font-size: 0.9rem; color: #555"
+              >📅 Date Filter:</span
+            >
+
+            <select
+              id="dashboardDateFilter"
+              onchange="applyDashboardFilter()"
+              style="
+                padding: 8px 16px;
+                border-radius: 30px;
+                border: 2px solid #dc143c;
+                background: white;
+                font-weight: 600;
+                font-size: 0.85rem;
+                font-family: &quot;Inter&quot;, sans-serif;
+                cursor: pointer;
+                color: #333;
+                min-width: 140px;
+                outline: none;
+              "
+            >
+              <option value="today">📅 Today</option>
+              <option value="yesterday">📅 Yesterday</option>
+              <option value="thisweek">📅 This Week</option>
+              <option value="thismonth">📅 This Month</option>
+              <option value="thisyear">📅 This Year</option>
+              <option value="custom">📅 Custom Date</option>
+            </select>
+
+            <!-- Custom Date Range (hidden by default) -->
+            <div
+              id="customDateRange"
+              style="
+                display: none;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+              "
+            >
+              <label style="font-size: 0.8rem; color: #666">From:</label>
+              <input
+                type="date"
+                id="customDateFrom"
+                style="
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  border: 1.5px solid #e0e0e0;
+                  font-family: &quot;Inter&quot;, sans-serif;
+                  font-size: 0.8rem;
+                "
+              />
+              <label style="font-size: 0.8rem; color: #666">To:</label>
+              <input
+                type="date"
+                id="customDateTo"
+                style="
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  border: 1.5px solid #e0e0e0;
+                  font-family: &quot;Inter&quot;, sans-serif;
+                  font-size: 0.8rem;
+                "
+              />
+              <button
+                onclick="applyCustomDateRange()"
+                style="
+                  padding: 6px 16px;
+                  border-radius: 20px;
+                  border: none;
+                  background: #dc143c;
+                  color: white;
+                  font-weight: 600;
+                  font-size: 0.8rem;
+                  cursor: pointer;
+                  font-family: &quot;Inter&quot;, sans-serif;
+                "
+              >
+                Apply
+              </button>
+            </div>
+
+            <span
+              id="filterDateDisplay"
+              style="font-size: 0.8rem; color: #888; margin-left: auto"
+            >
+              Showing: <strong id="filterDateLabel">Today</strong>
+            </span>
           </div>
 
           <!-- Recent Activity Table -->
           <div class="staff-recent-activity">
             <div class="recent-header">
               <h2>📋 Recent Activity</h2>
+              <span
+                id="dashboardDateRangeDisplay"
+                style="font-size: 0.85rem; color: #888; font-weight: 500"
+              >
+                📅 <span id="dashboardDateRangeText">Today</span>
+              </span>
             </div>
             <div class="table-wrapper">
               <table class="staff-table">
                 <thead>
                   <tr>
                     <th>Order #</th>
+                    <th>Date</th>
                     <th>Customer #</th>
                     <th>Items</th>
                     <th>Status</th>
-                    <th>Total</th>
+                    <th>Total Amount</th>
                   </tr>
                 </thead>
                 <tbody id="adminTableBody">
@@ -207,52 +323,226 @@
         <div id="pageOrders" class="staff-page-content">
           <h2>📦 Order Management</h2>
           <p style="color: #888; margin-bottom: 1rem">
-            View and monitor all customer orders here.
+            View and manage all customer orders here.
           </p>
 
-          <div class="staff-recent-activity" style="margin-top: 1rem">
-            <div class="recent-header">
-              <h2>📋 All Orders</h2>
-            </div>
-            <div class="table-wrapper">
-              <table class="staff-table">
-                <thead>
-                  <tr>
-                    <th>Order #</th>
-                    <th>Customer #</th>
-                    <th>Item List</th>
-                    <th>Time</th>
-                    <th>Payment Type</th>
-                    <th>Dietary Preference</th>
-                  </tr>
-                </thead>
-                <tbody id="adminOrdersBody">
-                  <!-- Orders will be injected here -->
-                </tbody>
-              </table>
-            </div>
-            <div
-              id="adminOrdersEmpty"
-              class="staff-empty-state"
-              style="display: none"
+          <!-- 🔥 DATE FILTER FOR ORDER MANAGEMENT -->
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 1rem;
+              flex-wrap: wrap;
+              background: white;
+              padding: 0.8rem 1.2rem;
+              border-radius: 12px;
+              border: 1px solid #f0e2d2;
+            "
+          >
+            <span style="font-weight: 600; font-size: 0.9rem; color: #555"
+              >📅 Filter by Date:</span
             >
-              <span>📋</span>
-              <p>No orders found</p>
-              <p class="empty-subtitle">
-                Orders will appear here when customers place them
-              </p>
-            </div>
-            <div
-              id="adminOrdersLoading"
-              class="staff-loading"
-              style="display: none"
+
+            <select
+              id="ordersDateFilter"
+              onchange="applyOrdersDateFilter()"
+              style="
+                padding: 8px 16px;
+                border-radius: 30px;
+                border: 2px solid #dc143c;
+                background: white;
+                font-weight: 600;
+                font-size: 0.85rem;
+                font-family: &quot;Inter&quot;, sans-serif;
+                cursor: pointer;
+                color: #333;
+                min-width: 140px;
+                outline: none;
+              "
             >
-              <div class="spinner"></div>
-              <p>Loading orders...</p>
+              <option value="all">📅 All Time</option>
+              <option value="today">📅 Today</option>
+              <option value="yesterday">📅 Yesterday</option>
+              <option value="thisweek">📅 This Week</option>
+              <option value="thismonth">📅 This Month</option>
+              <option value="thisyear">📅 This Year</option>
+              <option value="custom">📅 Custom Date</option>
+            </select>
+
+            <!-- Custom Date Range (hidden by default) -->
+            <div
+              id="ordersCustomDateRange"
+              style="
+                display: none;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+              "
+            >
+              <label style="font-size: 0.8rem; color: #666">From:</label>
+              <input
+                type="date"
+                id="ordersCustomDateFrom"
+                style="
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  border: 1.5px solid #e0e0e0;
+                  font-family: &quot;Inter&quot;, sans-serif;
+                  font-size: 0.8rem;
+                "
+              />
+              <label style="font-size: 0.8rem; color: #666">To:</label>
+              <input
+                type="date"
+                id="ordersCustomDateTo"
+                style="
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  border: 1.5px solid #e0e0e0;
+                  font-family: &quot;Inter&quot;, sans-serif;
+                  font-size: 0.8rem;
+                "
+              />
+              <button
+                onclick="applyOrdersCustomDateRange()"
+                style="
+                  padding: 6px 16px;
+                  border-radius: 20px;
+                  border: none;
+                  background: #dc143c;
+                  color: white;
+                  font-weight: 600;
+                  font-size: 0.8rem;
+                  cursor: pointer;
+                  font-family: &quot;Inter&quot;, sans-serif;
+                "
+              >
+                Apply
+              </button>
             </div>
+
+            <span
+              id="ordersFilterDateDisplay"
+              style="font-size: 0.8rem; color: #888; margin-left: auto"
+            >
+              Showing: <strong id="ordersFilterDateLabel">All Time</strong>
+            </span>
+          </div>
+
+          <!-- FILTER TABS -->
+          <div
+            style="
+              display: flex;
+              gap: 8px;
+              margin-bottom: 1rem;
+              flex-wrap: wrap;
+            "
+          >
+            <button
+              class="filter-tab active"
+              data-filter="all"
+              onclick="filterAdminOrders('all')"
+              style="
+                padding: 8px 20px;
+                border-radius: 30px;
+                border: 2px solid #dc143c;
+                background: #dc143c;
+                color: white;
+                font-weight: 600;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-family: &quot;Inter&quot;, sans-serif;
+                transition: all 0.2s;
+              "
+            >
+              📋 All (<span id="adminCountAll">0</span>)
+            </button>
+            <button
+              class="filter-tab"
+              data-filter="pending"
+              onclick="filterAdminOrders('pending')"
+              style="
+                padding: 8px 20px;
+                border-radius: 30px;
+                border: 2px solid #ffc107;
+                background: transparent;
+                color: #856404;
+                font-weight: 600;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-family: &quot;Inter&quot;, sans-serif;
+                transition: all 0.2s;
+              "
+            >
+              ⏳ Pending (<span id="adminCountPending">0</span>)
+            </button>
+            <button
+              class="filter-tab"
+              data-filter="completed"
+              onclick="filterAdminOrders('completed')"
+              style="
+                padding: 8px 20px;
+                border-radius: 30px;
+                border: 2px solid #28a745;
+                background: transparent;
+                color: #155724;
+                font-weight: 600;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-family: &quot;Inter&quot;, sans-serif;
+                transition: all 0.2s;
+              "
+            >
+              ✅ Completed (<span id="adminCountCompleted">0</span>)
+            </button>
+            <button
+              class="filter-tab"
+              data-filter="declined"
+              onclick="filterAdminOrders('declined')"
+              style="
+                padding: 8px 20px;
+                border-radius: 30px;
+                border: 2px solid #dc3545;
+                background: transparent;
+                color: #dc3545;
+                font-weight: 600;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-family: &quot;Inter&quot;, sans-serif;
+                transition: all 0.2s;
+              "
+            >
+              ❌ Declined (<span id="adminCountDeclined">0</span>)
+            </button>
+          </div>
+
+          <!-- Order Cards Container -->
+          <div id="adminOrdersContainer">
+            <!-- Order cards will be injected here -->
+          </div>
+
+          <div
+            id="adminOrdersEmpty"
+            class="staff-empty-state"
+            style="display: none"
+          >
+            <span>📋</span>
+            <p>No orders found</p>
+            <p class="empty-subtitle">
+              Orders will appear here when customers place them
+            </p>
+          </div>
+
+          <div
+            id="adminOrdersLoading"
+            class="staff-loading"
+            style="display: none"
+          >
+            <div class="spinner"></div>
+            <p>Loading orders...</p>
           </div>
         </div>
-
         <!-- Menu Management Page -->
         <div id="pageMenu" class="staff-page-content">
           <h2>🍽️ Menu Management</h2>
