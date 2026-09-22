@@ -477,11 +477,17 @@ function openReviewModal() {
     return;
   }
 
-  // Update modal content
-  document.getElementById("modalRatingDisplay").textContent =
-    renderStarsText(rating);
-  document.getElementById("modalCommentDisplay").textContent =
-    comment || "No comment";
+  // Update modal content (with safety checks)
+  const ratingDisplay = document.getElementById("modalRatingDisplay");
+  const commentDisplay = document.getElementById("modalCommentDisplay");
+
+  if (ratingDisplay) {
+    ratingDisplay.textContent = renderStarsText(rating);
+  }
+
+  if (commentDisplay) {
+    commentDisplay.textContent = comment || "No comment";
+  }
 
   // Reset name selection to "Use Customer #"
   window.selectedNameOption = "customer";
