@@ -463,7 +463,7 @@ let cart = JSON.parse(localStorage.getItem("silentBite_cart")) || [];
 let currentCategory = "all";
 
 // ========== BACKEND API URL ==========
-const API_URL = "https://silent-voice-food-hub-api.onrender.com/api";
+const API_URL = "http://localhost:3000/api";
 console.log("🔗 API URL:", API_URL);
 
 // ========== ORDER SLIP SYSTEM ==========
@@ -893,6 +893,7 @@ function closeMealModal() {
 // ============================================================
 
 function renderRecommendations() {
+  stopRecommendationsTicker();
   const recTagsContainer = document.getElementById("recTagsContainer");
   const recItemsList = document.getElementById("recItemsList");
   if (!recTagsContainer || !recItemsList) return;
@@ -1016,11 +1017,12 @@ function renderRecommendations() {
 }
 
 // ============================================================
-// ========== INFINITE LOOP TICKER ==========
+// ========== INFINITE LOOP TICKER (FIXED) ==========
 // ============================================================
 
-let tickerScrollInterval = null;
+let tickerAnimationId = null;
 let isUserInteracting = false;
+let tickerLastTimestamp = 0;
 
 function initRecommendationsTicker() {
   const container = document.getElementById("recItemsList");
@@ -1028,110 +1030,127 @@ function initRecommendationsTicker() {
 
   if (!container || !ticker) return;
 
-  // Clear any existing interval
-  if (tickerScrollInterval) {
-    clearInterval(tickerScrollInterval);
-    tickerScrollInterval = null;
+  // 🔥 CRITICAL FIX: Cancel any existing animation before starting a new one
+  if (tickerAnimationId) {
+    cancelAnimationFrame(tickerAnimationId);
+    tickerAnimationId = null;
   }
 
-  // 🔥 Initialize scroll position in the middle (so user can scroll both ways)
+  // 🔥 Reset flags
+  isUserInteracting = false;
+  tickerLastTimestamp = 0;
+
+  // Initialize scroll position in the middle
   const thirdWidth = ticker.scrollWidth / 3;
   container.scrollLeft = thirdWidth;
 
-  let autoScrollSpeed = 0.5; // pixels per frame
-  let rafId = null;
-  let lastTimestamp = 0;
+  const autoScrollSpeed = 0.4; // 🔥 SLOW & consistent speed
 
-  // 🔥 Auto-scroll animation using requestAnimationFrame
   function autoScroll(timestamp) {
-    if (!lastTimestamp) lastTimestamp = timestamp;
-    const delta = timestamp - lastTimestamp;
-    lastTimestamp = timestamp;
+    if (!tickerLastTimestamp) tickerLastTimestamp = timestamp;
+    const delta = timestamp - tickerLastTimestamp;
+    tickerLastTimestamp = timestamp;
 
     if (!isUserInteracting && container) {
       container.scrollLeft += autoScrollSpeed * (delta / 16);
     }
 
-    // 🔥 Seamless loop - when scroll reaches boundaries, jump to equivalent position
+    // Seamless loop
     const totalWidth = ticker.scrollWidth;
-    const thirdWidth = totalWidth / 3;
+    const third = totalWidth / 3;
 
-    if (container.scrollLeft >= thirdWidth * 2) {
-      // Scrolled past the second copy - jump back by one full set
-      container.scrollLeft -= thirdWidth;
+    if (container.scrollLeft >= third * 2) {
+      container.scrollLeft -= third;
     } else if (container.scrollLeft <= 0) {
-      // Scrolled past the beginning - jump forward by one full set
-      container.scrollLeft += thirdWidth;
+      container.scrollLeft += third;
     }
 
-    rafId = requestAnimationFrame(autoScroll);
+    tickerAnimationId = requestAnimationFrame(autoScroll);
   }
 
-  // Start auto-scroll
-  rafId = requestAnimationFrame(autoScroll);
+  // Start the animation
+  tickerAnimationId = requestAnimationFrame(autoScroll);
 
-  // 🔥 Pause on user interaction
+  // 🔥 Remove old listeners before adding new ones (prevent duplicates)
+  const newContainer = container.cloneNode(false);
+  // Don't actually replace - just remove old listeners via a flag
+  // Instead, use a stored reference
+
+  // Clean way: remove previous listeners if they exist
+  if (container._tickerPause) {
+    container.removeEventListener("touchstart", container._tickerPause);
+    container.removeEventListener("touchend", container._tickerResume);
+    container.removeEventListener("touchcancel", container._tickerResume);
+    container.removeEventListener("mouseenter", container._tickerPause);
+    container.removeEventListener("mouseleave", container._tickerResume);
+    container.removeEventListener("mousedown", container._tickerPause);
+    container.removeEventListener("mouseup", container._tickerResume);
+    container.removeEventListener("wheel", container._tickerPause);
+    container.removeEventListener("scroll", container._tickerScrollHandler);
+  }
+
+  // Define pause/resume
   const pauseScroll = () => {
     isUserInteracting = true;
   };
 
   const resumeScroll = () => {
-    // Wait a moment before resuming
     setTimeout(() => {
       isUserInteracting = false;
-      lastTimestamp = 0;
+      tickerLastTimestamp = 0;
     }, 1500);
   };
 
-  // Touch events (mobile)
+  // Store references on the element for cleanup
+  container._tickerPause = pauseScroll;
+  container._tickerResume = resumeScroll;
+
+  // Add listeners
   container.addEventListener("touchstart", pauseScroll, { passive: true });
   container.addEventListener("touchend", resumeScroll, { passive: true });
   container.addEventListener("touchcancel", resumeScroll, { passive: true });
-
-  // Mouse events (for testing on desktop)
   container.addEventListener("mouseenter", pauseScroll);
   container.addEventListener("mouseleave", resumeScroll);
   container.addEventListener("mousedown", pauseScroll);
   container.addEventListener("mouseup", resumeScroll);
-
-  // Wheel scroll (desktop trackpad/mouse)
   container.addEventListener("wheel", pauseScroll, { passive: true });
 
-  // 🔥 Handle seamless loop on manual scroll (touch/wheel)
+  // Handle seamless loop on manual scroll
   let scrollTimeout;
-  container.addEventListener(
-    "scroll",
-    () => {
-      // Clear any pending timeout
-      clearTimeout(scrollTimeout);
+  const scrollHandler = () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const totalWidth = ticker.scrollWidth;
+      const third = totalWidth / 3;
 
-      // Check for seamless loop
-      scrollTimeout = setTimeout(() => {
-        const totalWidth = ticker.scrollWidth;
-        const thirdWidth = totalWidth / 3;
+      if (container.scrollLeft >= third * 2) {
+        container.scrollLeft -= third;
+      } else if (container.scrollLeft <= 0) {
+        container.scrollLeft += third;
+      }
+    }, 100);
+  };
 
-        if (container.scrollLeft >= thirdWidth * 2) {
-          container.scrollLeft -= thirdWidth;
-        } else if (container.scrollLeft <= 0) {
-          container.scrollLeft += thirdWidth;
-        }
-      }, 100);
-    },
-    { passive: true },
-  );
-
-  // Store the rafId for cleanup
-  tickerScrollInterval = rafId;
+  container._tickerScrollHandler = scrollHandler;
+  container.addEventListener("scroll", scrollHandler, { passive: true });
 
   console.log("✅ Recommendations ticker initialized");
 }
 
+// ========== STOP TICKER (call before re-render) ==========
+function stopRecommendationsTicker() {
+  if (tickerAnimationId) {
+    cancelAnimationFrame(tickerAnimationId);
+    tickerAnimationId = null;
+    console.log("🛑 Ticker stopped");
+  }
+  isUserInteracting = false;
+  tickerLastTimestamp = 0;
+}
+
 // ========== CLEANUP ON PAGE CHANGE ==========
 window.addEventListener("beforeunload", function () {
-  if (tickerScrollInterval) {
-    cancelAnimationFrame(tickerScrollInterval);
-    tickerScrollInterval = null;
-  }
+  stopRecommendationsTicker();
 });
 
 function renderMenu() {
@@ -2035,7 +2054,7 @@ function updateOrderSlipBadge() {
     }
   }
 
-  // Also update the nav icon red badge
+  // Also update the nav icon red badge (dynamic)
   updateNavIconBadge();
 
   // 🔥 ALSO update the blue badge (active orders)
@@ -2488,22 +2507,36 @@ function showEmptyCartModal() {
     }
   });
 }
-
 // ============================================================
-// ========== BOTTOM NAVIGATION ==========
+// ========== BOTTOM NAVIGATION (FIXED) ==========
 // ============================================================
 
 function initBottomNav() {
   const navButtons = document.querySelectorAll(".nav-icon");
+
   navButtons.forEach((btn) => {
+    // 🔥 Check if this button already has a listener
+    if (btn.dataset.navListener === "true") {
+      return;
+    }
+
+    btn.dataset.navListener = "true";
+
     btn.addEventListener("click", () => {
       const action = btn.dataset.nav;
+
       if (action === "menu") {
-        window.location.href = "menu.html"; // Changed: always go to menu
+        window.location.href = "menu.html";
       } else if (action === "cart") {
         window.location.href = "cart.html";
-      } else if (action === "rate") {
-        // 🔥 Navigate to rate page
+      } else if (action === "payment") {
+        if (cart.length === 0) {
+          showEmptyCartModal();
+        } else {
+          window.location.href = "payment.html";
+        }
+      } else if (action === "rate" || action === "ratings") {
+        // 🔥 FIX: Go to rate page
         window.location.href = "rate.html";
       } else if (action === "orderslip") {
         window.location.href = "orderslip.html";
@@ -2511,6 +2544,7 @@ function initBottomNav() {
     });
   });
 }
+
 // ============================================================
 // ========== MIGRATE OLD ORDER SLIPS ==========
 // ============================================================
@@ -2708,17 +2742,12 @@ let resizeTimeout;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimeout);
   resizeTimeout = setTimeout(() => {
-    // Only re-render if on menu page
     if (
       document.getElementById("recItemsList") &&
       typeof renderRecommendations === "function"
     ) {
-      // 🔥 Clean up any running ticker
-      if (tickerScrollInterval) {
-        cancelAnimationFrame(tickerScrollInterval);
-        tickerScrollInterval = null;
-      }
-
+      // Stop ticker before re-rendering
+      stopRecommendationsTicker();
       renderRecommendations();
     }
   }, 300);

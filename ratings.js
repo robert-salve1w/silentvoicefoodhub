@@ -9,10 +9,42 @@ window.currentReviewItemId = itemId;
 window.currentReviewFilter = "top";
 window.selectedReviewRating = 0;
 window.selectedNameOption = "customer"; // 'customer' or 'custom'
-
 // Load ratings when page loads
 document.addEventListener("DOMContentLoaded", function () {
   console.log("📋 Ratings page loaded, itemId:", itemId);
+
+  // 🔥 INITIALIZE BOTTOM BAR AUTO-HIDE
+  if (typeof initScrollHideBottomBar === "function") {
+    initScrollHideBottomBar();
+  }
+
+  // 🔥 INITIALIZE BOTTOM NAV
+  if (typeof initBottomNav === "function") {
+    initBottomNav();
+  }
+
+  // 🔥 RESTORE ORDER SLIP BADGES
+  // Load the saved filter state from localStorage
+  const savedFilter =
+    localStorage.getItem("silentBite_orderslipFilter") || "all";
+  if (typeof orderslipDateFilter !== "undefined") {
+    orderslipDateFilter = savedFilter;
+  }
+
+  // Update all badges (active orders + unread updates)
+  if (typeof updateAllBadges === "function") {
+    updateAllBadges();
+  }
+
+  // Update rate badge
+  if (typeof updateRateBadge === "function") {
+    updateRateBadge();
+  }
+
+  // Update cart badge
+  if (typeof updateCartBadge === "function") {
+    updateCartBadge();
+  }
 
   // 🔥 Initialize star rating FIRST
   setTimeout(() => {
@@ -31,12 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
   }
 
-  // Update cart badge
-  if (typeof updateCartBadge === "function") {
-    updateCartBadge();
-  }
-
-  // Bottom navigation
+  // Bottom navigation (re-attach to ensure it works)
   document.querySelectorAll(".nav-icon").forEach((btn) => {
     btn.addEventListener("click", function () {
       const action = this.dataset.nav;
@@ -44,8 +71,8 @@ document.addEventListener("DOMContentLoaded", function () {
         window.location.href = "menu.html";
       } else if (action === "cart") {
         window.location.href = "cart.html";
-      } else if (action === "payment") {
-        window.location.href = "payment.html";
+      } else if (action === "rate" || action === "ratings") {
+        window.location.href = "rate.html";
       } else if (action === "orderslip") {
         window.location.href = "orderslip.html";
       }
@@ -56,18 +83,24 @@ document.addEventListener("DOMContentLoaded", function () {
   setTimeout(() => {
     attachSubmitButtonEvent();
   }, 500);
+
+  // 🔥 CHECK FOR ORDER UPDATES EVERY 10 SECONDS
+  if (typeof checkOrderUpdates === "function") {
+    checkOrderUpdates();
+    setInterval(() => {
+      checkOrderUpdates();
+    }, 10000);
+  }
 });
 
 // ========== LOAD RATINGS PAGE ==========
 async function loadRatingsPage(itemId) {
   const item = menuData.find((m) => m.id === itemId);
 
-  // Update page title
+  // 🔥 Update dish name (now in the ratings-dish-name element)
   const titleEl = document.getElementById("ratingsPageTitle");
   if (titleEl) {
-    titleEl.textContent = item
-      ? `Reviews and Ratings: ${item.name}`
-      : "Reviews and Ratings";
+    titleEl.textContent = item ? `${item.name}` : "Reviews and Ratings";
   }
 
   // Load from MongoDB first

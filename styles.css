@@ -4541,3 +4541,109 @@ a:focus-visible,
     font-size: 0.95rem;
   }
 }
+
+/* ========== FIXED: Review Input Row ========== */
+.review-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.review-comment-input {
+  flex: 1;
+  min-width: 0; /* 🔥 Prevents input from overflowing */
+  padding: 0.8rem 1rem;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.review-comment-input:focus {
+  border-color: #dc143c;
+}
+
+.review-submit-btn {
+  flex-shrink: 0; /* 🔥 Prevents button from shrinking */
+  padding: 0.8rem 1.5rem;
+  background: #dc143c;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  transition: all 0.2s;
+  opacity: 0.5;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.review-submit-btn:not(:disabled) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ========== RATINGS HEADER ========== */
+.ratings-header-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #8b0000;
+  flex: 1;
+  text-align: center;
+}
+
+/* ========== RATINGS DISH NAME (Below header) ========== */
+.ratings-dish-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2c2b28;
+  text-align: center;
+  padding: 1rem 1rem 0.5rem;
+  background: linear-gradient(145deg, #fff5f5 0%, #ffe4e4 100%);
+}
+
+/* Mobile adjustment */
+@media (max-width: 480px) {
+  .ratings-header-title {
+    font-size: 1rem;
+  }
+
+  .ratings-dish-name {
+    font-size: 1.05rem;
+  }
+
+  .review-submit-btn {
+    padding: 0.8rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .review-comment-input {
+    font-size: 0.85rem;
+    padding: 0.7rem 0.8rem;
+  }
+}
+
+/* ========== RATINGS PAGE - ENABLE SCROLL DETECTION ========== */
+.ratings-page {
+  min-height: 100vh;
+  background: linear-gradient(145deg, #fff5f5 0%, #ffe4e4 100%);
+  padding-bottom: 90px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Make sure body can scroll */
+body {
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
+}
