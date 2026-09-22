@@ -1,6 +1,6 @@
 // ========== ADMIN DASHBOARD SCRIPT ==========
 // API URL
-const API_URL = "http://localhost:3000/api";
+const API_URL = "https://silent-voice-food-hub-api.onrender.com/api";
 
 console.log("🔗 API URL:", API_URL);
 
